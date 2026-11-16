@@ -1,0 +1,80 @@
+name: build-test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore
+        run: dotnet restore LuaTools.Nova.sln
+
+      - name: Build
+        run: dotnet build LuaTools.Nova.sln --no-restore -c Release
+
+      - name: Test
+        run: dotnet test LuaTools.Nova.sln --no-build -c Release --logger "console;verbosity=normal"
+
+  publish:
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Publish (self-contained linux-x64)
+        run: |
+          dotnet publish src/LuaTools.UI -c Release -r linux-x64 --self-contained \
+            -p:PublishSingleFile=false -o artifacts/luatools-nova-linux-x64
+
+      - name: Stage packaging files
+        run: |
+          cp packaging/luatools-nova.desktop artifacts/luatools-nova-linux-x64/
+          cp assets/icon/luatools-nova_16.png artifacts/luatools-nova-linux-x64/
+          cp assets/icon/luatools-nova_256.png artifacts/luatools-nova-linux-x64/
+          cp assets/icon/luatools-nova.ico artifacts/luatools-nova-linux-x64/
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: luatools-nova-linux-x64
+          path: artifacts/luatools-nova-linux-x64/
+
+  release:
+    runs-on: ubuntu-latest
+    needs: [build, publish]
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Publish
+        run: |
+          dotnet publish src/LuaTools.UI -c Release -r linux-x64 --self-contained \
+            -o artifacts/luatools-nova-linux-x64
+          cd artifacts && tar czf luatools-nova-${GITHUB_REF_NAME}-linux-x64.tar.gz luatools-nova-linux-x64
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/luatools-nova-*-linux-x64.tar.gz
+          generate_release_notes: true

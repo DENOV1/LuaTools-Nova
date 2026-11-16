@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=LuaTools Nova
+GenericName=Steam Manifest Manager
+Comment=Linux-native Steam manifest/lua management (Avalonia)
+Exec=/opt/luatools-nova/luatools-nova %u
+Icon=luatools-nova
+Terminal=false
+Categories=Game;Utility;Network;
+Keywords=steam;manifest;lua;depot;
+MimeType=x-scheme-handler/luatools;x-scheme-handler/luatoolsnova;
+StartupWMClass=luatools-nova
