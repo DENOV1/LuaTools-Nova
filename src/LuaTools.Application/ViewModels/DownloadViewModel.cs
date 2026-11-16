@@ -99,13 +99,19 @@ public partial class DownloadViewModel : ObservableObject
     [ObservableProperty] private bool _isResultsOpen;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasDetails), nameof(ShowFeatured))]
+    [NotifyPropertyChangedFor(nameof(HasDetails), nameof(ShowFeatured), nameof(DetailsHeaderUrl))]
+    [NotifyCanExecuteChangedFor(nameof(FetchCommand))]
     private GameDetails? _details;
+
+    /// <summary>Header art for the details card (original binds Details.HeaderImage the same way).</summary>
+    public string? DetailsHeaderUrl => Details?.HeaderImage;
 
     public bool HasDetails => Details is not null;
     public string GenresText => Details is null ? "" : string.Join(", ", Details.Genres);
 
-    [ObservableProperty] private bool _isChecking;
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(FetchCommand))]
+    private bool _isChecking;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasSources), nameof(ShowFeatured))]

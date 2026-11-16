@@ -2,6 +2,7 @@
     x:Class="LuaTools.UI.Views.ManageView"
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:img="clr-namespace:LuaTools.UI.Services"
     xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia">
 
     <Grid Margin="8,16,16,8">
@@ -114,8 +115,15 @@
                                     <Border Classes="glass-card glass-card-hover" ClipToBounds="True" CornerRadius="10">
                                         <Panel>
                                             <Border Background="#1A1A1A" />
-                                            <Image Source="{Binding CoverPath}" Stretch="UniformToFill"
-                                                   IsVisible="{Binding CoverPath, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                                            <Panel>
+                                                <TextBlock Margin="6,0" VerticalAlignment="Center" FontSize="11"
+                                                           Foreground="{DynamicResource TextMuted}"
+                                                           Text="{Binding Name, FallbackValue=''}"
+                                                           TextTrimming="CharacterEllipsis"
+                                                           IsVisible="{Binding !(img:ImageLoader.HasResult), RelativeSource={RelativeSource Self}, Converter={x:Static BoolConverters.Not}}" />
+                                                <Image img:ImageLoader.Source="{Binding CoverPath}" Stretch="UniformToFill"
+                                                       IsVisible="{Binding (img:ImageLoader.HasResult), RelativeSource={RelativeSource Self}}" />
+                                            </Panel>
                                             <Border VerticalAlignment="Bottom" Background="#CC14161C" Padding="10,6">
                                                 <StackPanel>
                                                     <TextBlock FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextBright}"

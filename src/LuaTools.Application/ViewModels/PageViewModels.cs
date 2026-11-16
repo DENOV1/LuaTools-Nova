@@ -170,6 +170,15 @@ public partial class FixesViewModel : PagedListViewModel<FixGameCardVm>
     public bool IsDetailOpen => SelectedGame is not null;
     public ObservableCollection<FixItemVm> Fixes { get; } = new();
     [ObservableProperty] private bool _isLoadingFixes;
+    /// <summary>Non-null when the fixes list failed to load (API down / network error). The view
+    /// shows it with a Retry action instead of an empty silent list.</summary>
+    [ObservableProperty] private string? _fixesError;
+    /// <summary>Honest Linux state: fix application needs a discovered Steam install to check
+    /// which games exist on disk. False → Fix buttons disabled by design, banner explains why.</summary>
+    public bool IsSteamAvailable => _svc.Steam.EffectivePath is not null;
+    public string SteamMissingHint =>
+        "Steam was not detected. Start Steam once so Nova can find it, then reopen this page — "
+        + "fixes need the install dir to apply anything.";
 
     private List<FixItemVm> _allFixes = [];
     public ObservableCollection<TagPillVm> FixTags { get; } = new();
@@ -300,33 +309,52 @@ public partial class FixesViewModel : PagedListViewModel<FixGameCardVm>
         IsLoadingFixes = true;
         try
         {
-            var data = await _svc.Api.GetDenuvoFixesAsync(game.AppId);
-            if (data is not null)
+            DenuvoFixesResponse? data;
+            try { data = await _svc.Api.GetDenuvoFixesAsync(game.AppId); }
+            catch (Exception ex)
             {
-                _allFixes = data.Fixes.Select(f => new FixItemVm(f)).ToList();
-
-                string? installDir = long.TryParse(game.AppId, out long gameAppId)
-                    ? await Task.Run(() => _svc.Library.GetInstallDir(gameAppId))
-                    : null;
-                foreach (var f in _allFixes)
-                {
-                    f.GameInstalled = installDir is not null;
-                    f.IsApplied = installDir is not null
-                        && File.Exists(FixRecordPaths.Get(installDir, f.Id));
-                }
-
-                var distinct = _allFixes.SelectMany(f => f.Tags)
-                    .GroupBy(t => t.Id).Select(g => g.First())
-                    .OrderBy(t => t.Name).ToList();
-                if (distinct.Count > 1)
-                    foreach (var t in distinct) FixTags.Add(new TagPillVm(t));
-
-                OnPropertyChanged(nameof(HasFixTags));
-                ApplyFixFilter();
+                FixesError = $"Couldn't load fixes: {ex.Message}";
+                return;
             }
+            ApplyFixesData(data);
         }
-        catch { /* leave empty */ }
         finally { IsLoadingFixes = false; }
+    }
+
+    /// <summary>Applies fetched fix data to the detail view. Public so tests can exercise the
+    /// null-response (API down) path without network.</summary>
+    public void ApplyFixesData(DenuvoFixesResponse? data)
+    {
+        if (data is null)
+        {
+            _allFixes = [];
+            Fixes.Clear();
+            FixTags.Clear();
+            FixesError = "Couldn't load fixes for this game. Check your connection and try again.";
+            return;
+        }
+
+        FixesError = null;
+        _allFixes = data.Fixes.Select(f => new FixItemVm(f)).ToList();
+
+        string? installDir = long.TryParse(data.AppId, out long gameAppId)
+            ? _svc.Library.GetInstallDir(gameAppId)
+            : null;
+        foreach (var f in _allFixes)
+        {
+            f.GameInstalled = installDir is not null;
+            f.IsApplied = installDir is not null
+                && File.Exists(FixRecordPaths.Get(installDir, f.Id));
+        }
+
+        var distinct = _allFixes.SelectMany(f => f.Tags)
+            .GroupBy(t => t.Id).Select(g => g.First())
+            .OrderBy(t => t.Name).ToList();
+        if (distinct.Count > 1)
+            foreach (var t in distinct) FixTags.Add(new TagPillVm(t));
+
+        OnPropertyChanged(nameof(HasFixTags));
+        ApplyFixFilter();
     }
 
     [RelayCommand]
@@ -659,7 +687,8 @@ public partial class ModeCardViewModel : ObservableObject
     public bool IsRecommended => Mode == UnlockerMode.Bst;
     public bool IsExperimental => Mode == UnlockerMode.Ost;
 
-    public bool ShowActionButton { get; set; } = true;
+    [ObservableProperty]
+    private bool _showActionButton = true;
 
     public ModeCardViewModel(ModeCardInfo info) => Info = info;
 }

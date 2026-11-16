@@ -3,6 +3,7 @@
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
+    xmlns:img="clr-namespace:LuaTools.UI.Services"
     xmlns:views="clr-namespace:LuaTools.UI.Views">
 
     <Panel>
@@ -24,16 +25,30 @@
                                         Background="Transparent" BorderThickness="0" Padding="8,6"
                                         Command="{Binding $parent[ItemsControl].DataContext.SelectResultCommand}"
                                         CommandParameter="{Binding}" Cursor="Hand">
-                                    <Grid>
+                                    <!-- Original row layout: 60x28 capsule icon | name | appid -->
+                                    <Grid Margin="2">
                                         <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
                                             <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
                                         </Grid.ColumnDefinitions>
-                                        <StackPanel Orientation="Horizontal">
-                                            <TextBlock FontSize="12.5" Foreground="{DynamicResource TextBright}"
-                                                       Text="{Binding Name}" VerticalAlignment="Center" />
-                                            <TextBlock Margin="8,0,0,0" FontSize="11" VerticalAlignment="Center"
-                                                       Foreground="{DynamicResource TextMuted}" Text="{Binding AppId}" />
-                                        </StackPanel>
+                                        <Border Width="60" Height="28" CornerRadius="4" Background="#1A1A1A"
+                                                ClipToBounds="True">
+                                            <Panel>
+                                                <TextBlock Margin="4,0" VerticalAlignment="Center" FontSize="10"
+                                                           Foreground="{DynamicResource TextMuted}"
+                                                           Text="{Binding Name, FallbackValue=''}"
+                                                           TextTrimming="CharacterEllipsis"
+                                                           IsVisible="{Binding !(img:ImageLoader.HasResult), RelativeSource={RelativeSource Self}, Converter={x:Static BoolConverters.Not}}" />
+                                                <Image img:ImageLoader.Source="{Binding Icon}" Stretch="UniformToFill"
+                                                       IsVisible="{Binding (img:ImageLoader.HasResult), RelativeSource={RelativeSource Self}}" />
+                                            </Panel>
+                                        </Border>
+                                        <TextBlock Grid.Column="1" Margin="10,0" VerticalAlignment="Center" FontSize="13"
+                                                   Foreground="{DynamicResource TextBright}" Text="{Binding Name}"
+                                                   TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Grid.Column="2" VerticalAlignment="Center" FontSize="11.5"
+                                                   Foreground="{DynamicResource TextMuted}" Text="{Binding AppId}" />
                                     </Grid>
                                 </Button>
                             </DataTemplate>
@@ -56,15 +71,23 @@
                                     <Button Margin="0,0,8,8" Padding="0" Background="Transparent" BorderThickness="0"
                                             Command="{Binding $parent[ItemsControl].DataContext.SelectFeaturedCommand}"
                                             CommandParameter="{Binding}" Cursor="Hand">
-                                        <Border Classes="glass-card glass-card-hover" Height="120" ClipToBounds="True">
-                                            <Panel>
-                                                <Border Background="#1A1A1A" />
-                                                <Image Source="{Binding Image}" Stretch="UniformToFill" />
-                                                <Border VerticalAlignment="Bottom" Background="#CC14161C" Padding="8,5">
-                                                    <TextBlock FontSize="11.5" Foreground="{DynamicResource TextBright}"
-                                                               Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                                        <Border Classes="glass-card glass-card-hover" ClipToBounds="True" CornerRadius="8">
+                                            <StackPanel>
+                                                <Border Height="89" Background="#1A1A1A" ClipToBounds="True" CornerRadius="7,7,0,0">
+                                                    <Panel>
+                                                        <TextBlock Margin="8,0" VerticalAlignment="Center" FontSize="11"
+                                                                   Foreground="{DynamicResource TextMuted}"
+                                                                   Text="{Binding Name, FallbackValue=''}"
+                                                                   TextTrimming="CharacterEllipsis" TextWrapping="Wrap"
+                                                                   IsVisible="{Binding !(img:ImageLoader.HasResult), RelativeSource={RelativeSource Self}, Converter={x:Static BoolConverters.Not}}" />
+                                                        <Image img:ImageLoader.Source="{Binding Image}" Stretch="UniformToFill"
+                                                               IsVisible="{Binding (img:ImageLoader.HasResult), RelativeSource={RelativeSource Self}}" />
+                                                    </Panel>
                                                 </Border>
-                                            </Panel>
+                                                <TextBlock Height="34" Margin="8,6,8,8" FontSize="12" TextWrapping="Wrap"
+                                                           Foreground="{DynamicResource TextSecondary}" Text="{Binding Name}"
+                                                           TextTrimming="CharacterEllipsis" />
+                                            </StackPanel>
                                         </Border>
                                     </Button>
                                 </DataTemplate>
@@ -85,15 +108,23 @@
                                     <Button Margin="0,0,8,8" Padding="0" Background="Transparent" BorderThickness="0"
                                             Command="{Binding $parent[ItemsControl].DataContext.SelectFeaturedCommand}"
                                             CommandParameter="{Binding}" Cursor="Hand">
-                                        <Border Classes="glass-card glass-card-hover" Height="120" ClipToBounds="True">
-                                            <Panel>
-                                                <Border Background="#1A1A1A" />
-                                                <Image Source="{Binding Image}" Stretch="UniformToFill" />
-                                                <Border VerticalAlignment="Bottom" Background="#CC14161C" Padding="8,5">
-                                                    <TextBlock FontSize="11.5" Foreground="{DynamicResource TextBright}"
-                                                               Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                                        <Border Classes="glass-card glass-card-hover" ClipToBounds="True" CornerRadius="8">
+                                            <StackPanel>
+                                                <Border Height="89" Background="#1A1A1A" ClipToBounds="True" CornerRadius="7,7,0,0">
+                                                    <Panel>
+                                                        <TextBlock Margin="8,0" VerticalAlignment="Center" FontSize="11"
+                                                                   Foreground="{DynamicResource TextMuted}"
+                                                                   Text="{Binding Name, FallbackValue=''}"
+                                                                   TextTrimming="CharacterEllipsis" TextWrapping="Wrap"
+                                                                   IsVisible="{Binding !(img:ImageLoader.HasResult), RelativeSource={RelativeSource Self}, Converter={x:Static BoolConverters.Not}}" />
+                                                        <Image img:ImageLoader.Source="{Binding Image}" Stretch="UniformToFill"
+                                                               IsVisible="{Binding (img:ImageLoader.HasResult), RelativeSource={RelativeSource Self}}" />
+                                                    </Panel>
                                                 </Border>
-                                            </Panel>
+                                                <TextBlock Height="34" Margin="8,6,8,8" FontSize="12" TextWrapping="Wrap"
+                                                           Foreground="{DynamicResource TextSecondary}" Text="{Binding Name}"
+                                                           TextTrimming="CharacterEllipsis" />
+                                            </StackPanel>
                                         </Border>
                                     </Button>
                                 </DataTemplate>
@@ -103,22 +134,27 @@
                 </StackPanel>
 
                 <!-- Game info card -->
-                <Border Classes="glass-card" Padding="16" Margin="0,16,0,0" IsVisible="{Binding HasDetails}">
+                <Border Classes="glass-card" Padding="0" Margin="0,16,0,0" IsVisible="{Binding HasDetails}" ClipToBounds="True">
                     <StackPanel>
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            <StackPanel>
-                                <TextBlock FontSize="17" FontWeight="Bold" Foreground="{DynamicResource TextPrimary}"
-                                           Text="{Binding Details.Name}" TextTrimming="CharacterEllipsis" />
-                                <TextBlock Margin="0,3,0,0" FontSize="11.5" Foreground="{DynamicResource TextMuted}"
-                                           Text="{Binding Details.AppId}" />
-                            </StackPanel>
-                            <fa:SymbolIcon Grid.Column="1" Symbol="{x:Static fa:Symbol.Games}" FontSize="20"
-                                               Foreground="{DynamicResource AccentBrush}" />
-                        </Grid>
+                        <!-- Header art (original: MaxHeight 180, rounded top corners) -->
+                        <Border MaxHeight="180" Background="#1A1A1A" ClipToBounds="True" IsVisible="{Binding DetailsHeaderUrl, Converter={x:Static ObjectConverters.IsNotNull}}">
+                            <Image img:ImageLoader.Source="{Binding DetailsHeaderUrl}" Stretch="UniformToFill" />
+                        </Border>
+                        <StackPanel Margin="12,8,12,10">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock FontSize="14.5" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"
+                                       Text="{Binding Details.Name}" TextTrimming="CharacterEllipsis" />
+                            <Border Classes="chip" Margin="8,0,0,0" VerticalAlignment="Center"
+                                    Background="{DynamicResource AccentChipBg}" BorderThickness="0"
+                                    IsVisible="{Binding Details.IsDlc}">
+                                <TextBlock Classes="chip-text" Foreground="{DynamicResource AccentChipFg}" Text="DLC" />
+                            </Border>
+                        </StackPanel>
+                        <TextBlock Margin="0,3,0,0" FontSize="11.5" Foreground="{DynamicResource TextMuted}"
+                                   Text="{Binding Details.AppId}" />
+                        <TextBlock Margin="0,2,0,0" FontSize="11" Foreground="{DynamicResource TextMuted}"
+                                   Text="{Binding GenresText}"
+                                   IsVisible="{Binding GenresText, Converter={StaticResource StringNotEmpty}}" />
 
                         <StackPanel Margin="0,10,0,0" Orientation="Horizontal" IsVisible="{Binding HasDlcInfo}">
                             <Border Classes="chip" Background="{DynamicResource SuccessBadgeBg}"
@@ -141,12 +177,9 @@
                             </Border>
                         </StackPanel>
 
-                        <TextBlock Margin="0,10,0,0" FontSize="11.5" Foreground="{DynamicResource TextSecondary}"
-                                   Text="{Binding GenresText}"
-                                   IsVisible="{Binding GenresText, Converter={StaticResource StringNotEmpty}}" />
-
                         <Button Classes="accent-button" Margin="0,12,0,0" Padding="14,7" HorizontalAlignment="Left"
                                 Command="{Binding FetchCommand}" Content="Fetch" />
+                        </StackPanel>
                     </StackPanel>
                 </Border>
 
