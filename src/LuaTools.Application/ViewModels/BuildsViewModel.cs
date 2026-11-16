@@ -340,7 +340,7 @@ public partial class BuildsViewModel : PagedListViewModel<LuaTileViewModel>
         OnPropertyChanged(nameof(SaveInPlaceLabel));
     }
 
-    internal static string? ResolveActiveHash(
+    public static string? ResolveActiveHash(
         string? liveHash, IReadOnlyList<LuaVariant> stored, string? editBase)
     {
         if (liveHash is null) return null;

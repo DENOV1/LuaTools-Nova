@@ -9,5 +9,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\LuaTools.Core\LuaTools.Core.csproj" />
+    <ProjectReference Include="..\..\src\LuaTools.Infrastructure\LuaTools.Infrastructure.csproj" />
   </ItemGroup>
 </Project>

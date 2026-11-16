@@ -208,6 +208,7 @@ public sealed class HttpServerService : IHostedService
             return (200, Json(new { success = true, checking = false, sourcesLoaded = false,
                 sources = Array.Empty<object>(), installed }));
 
+        var camelOpts = new JsonSerializerOptions { PropertyNamingPolicy = JsonPropertyNamingPolicy.CamelCase };
         var sources = st.Sources.Select(s => (object)new
         {
             name = s.Name,
@@ -223,7 +224,7 @@ public sealed class HttpServerService : IHostedService
             indeterminate = s.Indeterminate,
         }).ToList();
 
-        return (200, Json(new
+        return (200, JsonSerializer.Serialize(new
         {
             success = true,
             appid = st.AppId,
@@ -235,7 +236,7 @@ public sealed class HttpServerService : IHostedService
             installFailed = st.InstallFailed,
             error = st.Error,
             installed,
-        }));
+        }, camelOpts));
     }
 
     private async Task<(int, string)> HandleCheckSources(long appId)

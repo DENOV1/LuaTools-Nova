@@ -133,6 +133,22 @@ public sealed partial class SteamPathLocator : ISteamLocator
         try
         {
             if (!Directory.Exists(path) && !File.Exists(path)) return null;
+
+            // Follow the symlink to its target (Valve's ~/.steam/steam may point at
+            // ~/.local/share/Steam or ~/.steam/debian-installation depending on distro packaging).
+            var info = new FileInfo(path);
+            string? target = info.LinkTarget;
+            if (target is null)
+            {
+                var dirInfo = new DirectoryInfo(path);
+                target = dirInfo.LinkTarget;
+            }
+            if (target is not null)
+            {
+                if (!Path.IsPathRooted(target))
+                    target = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(path) ?? "/", target));
+                return Path.GetFullPath(target);
+            }
             return Path.GetFullPath(path);
         }
         catch { return null; }

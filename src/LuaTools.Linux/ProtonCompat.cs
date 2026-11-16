@@ -117,7 +117,7 @@ public static class WineOverrides
         var order = new List<string>();
         foreach (string name in dllNames)
         {
-            var stem = Regex.Match(name, "^(.-)\\.[Dd][Ll][Ll]$").Groups[1].Value;
+            var stem = Regex.Match(name, "^(.+?)\\.[Dd][Ll][Ll]$").Groups[1].Value;
             if (stem.Length == 0) continue;
             string key = stem.ToLowerInvariant();
             if (!IsSystemProxy(key) || !seen.Add(key)) continue;

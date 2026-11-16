@@ -53,7 +53,7 @@ public partial class DownloadItem : ObservableObject
     private static readonly TimeSpan MinSpan = TimeSpan.FromSeconds(0.5);
     private const int MaxSamples = 64;
 
-    public Func<DateTime> UtcNow { get; init; } = () => DateTime.UtcNow;
+    public Func<DateTime> UtcNow { get; set; } = () => DateTime.UtcNow;
 
     public DownloadItem(DownloadJob job)
     {
