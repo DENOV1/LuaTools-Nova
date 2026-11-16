@@ -1,6 +1,18 @@
 # PROJECT_STATUS — LuaTools Nova
 
-**Status: v1.0.1 engineering-audit complete. Startup crash fixed at the architectural level. 116/116 automated tests green. Headless UI lifecycle verified (real MainWindow + all 10 pages + navigation). Self-contained linux-x64 release build published. GitHub Release v1.0.1 published as pre-release.**
+**Status: v1.0.2 — first Mint 22.3 test-round bugs fixed at root-cause level. 123/123 automated tests green. Image pipeline rebuilt for Avalonia (covers now load app-wide), Fetch button notifications fixed, Fixes page made honest about errors and Steam state. Release v1.0.2 published as pre-release.**
+
+### v1.0.2 (Mint 22.3 test round 1 → fixes)
+
+| Report | Root cause (traced, not guessed) | Fix | Regression test |
+|---|---|---|---|
+| Add page: covers missing | Avalonia has no string→IImage conversion (original is WPF, which does) — every `Image Source="{Binding …}"` with a URL/path silently failed; search rows had no icon column at all | New `ImageLoader` attached behavior + `SteamImageCache` (disk-cached by URL hash, in-flight dedup, memory cache, magic-byte validation, session-level missing-remember); search rows restored to original `[icon 60×28 | name | appid]` layout | headless MainWindow suite constructs the new templates; image validation unit-tested |
+| Add page: title wrong position | Details card had no header image and a different internal layout than the original | Details card restored to original: header art (≤180px, rounded top) → title + DLC chip → appid · genres → Fetch | `DetailsHeaderUrl_TracksSelectedGame` |
+| Add page: Fetch disabled | `_details`/`_isChecking` never notified `FetchCommand` → CanExecute never re-queried after async selection (CommunityToolkit commands do not auto-listen) | `[NotifyCanExecuteChangedFor(FetchCommand)]` on both | `FetchCommand_CanExecuteChanged_Fires_WhenDetailsArrive`, `FetchCommand_Disables_WhileChecking_And_ReEnables_After` |
+| Fixes page: buttons disabled / broken | Two real causes: (1) `GetDenuvoFixesAsync` null return or exception left a SILENT empty list; (2) `GameInstalled=false` (Steam not discovered → `GetInstallDir` null) disabled Fix buttons with no explanation | Error banner + Retry for load failures; honest "Steam was not detected" banner; hints explain the disabled state | `Fixes_NullResponse_ShowsError_NotSilentEmpty`, `Fixes_ValidResponse_Populates_And_ClearsError`, `Fixes_SteamMissing_IsDeclaredHonestly` |
+| Audit: Mode page buttons dead | `ModeCardViewModel.ShowActionButton` was a plain `{ get; set; }` set after binding | `[ObservableProperty]` | `ModeCard_ShowActionButton_IsObservable` |
+
+Command-binding audit (scripted): all 93 VM commands referenced from XAML resolve — no missing bindings app-wide. Live-API shape check: `hasManifest/hasFix` and listings contract match the original exactly.
 
 Last updated: 2026-11-16
 

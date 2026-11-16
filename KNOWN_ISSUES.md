@@ -2,6 +2,8 @@
 
 ## Open (honest list)
 
+0. **v1.0.2 test round 1 fixed**: covers app-wide, Fetch button, Fixes error/Steam honesty, Mode buttons — see PROJECT_STATUS.md table. Still **not visually verified on a real display** (sandbox has no display server): image rendering quality, spacing and the restored layouts need a human pass on Mint 22.3.
+
 1. **No GUI run on a real display yet.** The v1.0.1 audit verified the app boots through the full Avalonia pipeline headlessly (real MainWindow, all 10 pages, navigation, Show/Close). A real Linux Mint 22.3 desktop session is required to visually confirm rendering and compare against the original design. **This is why v1.0.1 ships as a pre-release.**
 2. **No live Steam verification.** Discovery/lua install/restart/depot paths are implemented against the documented layouts and covered by unit tests with fixtures, but never ran against a live Steam install.
 3. **No live network verification.** API clients target the same endpoints as the original; endpoint drift since the original's last release is unverified here.
