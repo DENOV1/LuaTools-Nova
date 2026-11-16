@@ -2,7 +2,20 @@
 
 Environment: Debian GNU/Linux 13 (trixie), .NET SDK 8.0.428, xUnit 2.9.2, Avalonia 11.2.8 + FluentAvaloniaUI 2.3.0. Sandbox has **no display server, no Steam, no live lua.tools/Hubcap services**. Every result below labels how it was verified. Nothing mocked is presented as real-world.
 
-## 0. v1.0.2 (Mint test round 1 fixes)
+## 0. v1.0.3 (Mint test round 2 fixes)
+
+```
+$ dotnet test LuaTools.Nova.sln --nologo
+Passed! 56/56 Core · 16/16 Linux · 26/26 Application · 38/38 Integration   (136 total)
+```
+New tests (13 net): install→existing-entry precondition, FastFetch protocol restore + persistence,
+source-failure classification (backend-down / no-listing / gated / all-erroring), Manage multi-file
+delete (decline/confirm/refresh), delete re-entry guard, Restart Steam wiring via counting
+ProcessControl fake, store-price parsing (discount/plain/free/unavailable), registry country
+extraction, NovaLog file output. Live smoke: appdetails endpoint returns real USD price for
+ELDEN RING (1245620 → $59.99); check_apis returns {"Luie":"available","Ryuu":"error 403"}.
+
+## 0b. v1.0.2 (Mint test round 1 fixes)
 
 ```
 $ dotnet test LuaTools.Nova.sln --nologo

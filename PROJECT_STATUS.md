@@ -1,6 +1,20 @@
 # PROJECT_STATUS — LuaTools Nova
 
-**Status: v1.0.2 — first Mint 22.3 test-round bugs fixed at root-cause level. 123/123 automated tests green. Image pipeline rebuilt for Avalonia (covers now load app-wide), Fetch button notifications fixed, Fixes page made honest about errors and Steam state. Release v1.0.2 published as pre-release.**
+**Status: v1.0.3 — second Mint 22.3 test round fixed at root-cause level. 136/136 automated tests green. Manage-delete deadlock killed (async dialogs), source failures made honest, FastFetch setting leak fixed, Restart Steam wired Linux-native, post-install guidance added, Steam store prices implemented. Release v1.0.3 published as pre-release.**
+
+### v1.0.3 (Mint 22.3 test round 2 → fixes)
+
+| Report | Root cause (traced) | Fix | Regression test |
+|---|---|---|---|
+| Fetch: game not in Steam; Replace dialog on 2nd attempt | Install **did** work (that's why fetch 2 saw the existing lua) — but Steam only picks up stplug-in luas after a restart, and v1.0.2 never said so nor offered a restart. Second-fetch Replace + "same content" = correct existing-entry detection | Post-install status now says "Restart Steam to see it in your library (Steam root: …)" + Restart Steam button on the Add page | `InstallLua_ThenReadInstalled_FindsExisting_AtSameRoot` |
+| Fetch config interface missing; "proceeds directly" | `ProtocolInstall` set `FastFetch=true`, whose setter **persists to settings.json** — one protocol launch permanently switched every later Fetch to silent auto-download, skipping the source/confirm interface (the original shows the same source cards + Replace dialog; Nova does too when FastFetch is off) | Protocol flow saves/restores the user's FastFetch choice | `ProtocolInstall_Restores_FastFetch_Setting` |
+| "No available sources found" everywhere | `CheckSourcesAsync` silently returned an empty dict on any HTTP/network failure → a flaky manifest backend was indistinguishable from genuinely no sources (the original has the same silent-empty behavior; Nova improves on it) | Backend/network failures now raise distinct errors; `SourceDiagnostics` classifies backend-down vs no-listing vs sign-in/key-gated vs all-erroring; NovaLog records outcomes | `SourceDiagnostics_Distinguishes_BackendFailure_From_NoSources` |
+| Manage delete freezes the whole app | `DialogServiceImpl.Confirm` did `ConfirmAsync(...).GetAwaiter().GetResult()` **on the UI thread** — blocking on a dialog that itself needs the UI thread = deadlock. Every Confirm/Info in the app had the same bug | `IDialogService` is async end-to-end (`ConfirmAsync`/`InfoAsync`); all 6 call sites ported; delete runs on a worker thread with a re-entry guard, progress state, per-file failure counting, list refresh, success/error toasts | `Manage_DeleteSelected_Deletes_Files_And_Refreshes`, `Manage_DeleteSelected_Reentry_Guarded` |
+| Restart Steam button missing | `MainViewModel.RestartSteamCommand` **existed but no view bound it** — and it used the deadlocking dialog | Linux-native restart (ProcessControl: `steam -shutdown` → SIGTERM → SIGKILL, systemd-unit fast path on SteamOS/Bazzite — same ladder as LuaTools Moon's stop_steam) now reachable from Home, Add status area; confirm + running-state + failure reporting | `Home_RestartSteam_Wired_To_ProcessControl` |
+| Two Settings buttons / empty screen | The Home "Steam" status row was mis-bound to `OpenSettingsCommand` (a second, pointless Settings entry) | Row is now the Restart Steam control; real Settings stays in the nav footer | headless construction |
+| No store prices | Feature absent (original has no prices either) | `SteamStoreService`: public Steam appdetails API, region from `~/.steam/registry.vdf` "country" (falls back to IP geolocation), 30-min TTL cache, in-flight dedup; Add-page details card shows final price, strikethrough original when discounted, "Free", "Price unavailable" — never fabricated | `StorePriceTests` (parse: discounted/plain/free/unavailable + registry country) + live endpoint smoke |
+
+**Moon reference:** its `stop_steam` ladder (graceful `-shutdown` bounded with timeout → SIGTERM → SIGKILL, pgrep gates, bootstrap-symlink checks) and Steam detection assumptions match Nova's `ProcessControl`, which v1.0.3 finally exposes in the UI.
 
 ### v1.0.2 (Mint 22.3 test round 1 → fixes)
 
