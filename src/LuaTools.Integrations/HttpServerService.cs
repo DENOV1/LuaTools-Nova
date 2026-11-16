@@ -5,6 +5,7 @@ using System.IO;
 using System.Net;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using LuaTools.Core.Downloads;
 using LuaTools.Core.Persistence;
 using LuaTools.Core.Services;
@@ -208,7 +209,7 @@ public sealed class HttpServerService : IHostedService
             return (200, Json(new { success = true, checking = false, sourcesLoaded = false,
                 sources = Array.Empty<object>(), installed }));
 
-        var camelOpts = new JsonSerializerOptions { PropertyNamingPolicy = JsonPropertyNamingPolicy.CamelCase };
+        var camelOpts = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
         var sources = st.Sources.Select(s => (object)new
         {
             name = s.Name,

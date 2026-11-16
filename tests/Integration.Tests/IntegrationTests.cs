@@ -97,7 +97,7 @@ public class PluginAddStateDtoTests
             Available = true, CanDownload = true, Locked = false, NeedsKey = false,
             Stats = "3/25", Downloading = false, Progress = 0, Indeterminate = true,
         };
-        var json = JsonSerializer.Serialize(dto);
+        var json = JsonSerializer.Serialize(dto, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
         using var doc = JsonDocument.Parse(json);
 
         Assert.True(doc.RootElement.TryGetProperty("name", out _));
