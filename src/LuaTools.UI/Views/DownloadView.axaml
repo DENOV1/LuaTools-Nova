@@ -152,6 +152,9 @@
                         </StackPanel>
                         <TextBlock Margin="0,3,0,0" FontSize="11.5" Foreground="{DynamicResource TextMuted}"
                                    Text="{Binding Details.AppId}" />
+                        <TextBlock Margin="0,3,0,0" FontSize="12" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource AccentBrush}" Text="{Binding PriceLine}"
+                                   IsVisible="{Binding PriceLine, Converter={StaticResource StringNotEmpty}}" />
                         <TextBlock Margin="0,2,0,0" FontSize="11" Foreground="{DynamicResource TextMuted}"
                                    Text="{Binding GenresText}"
                                    IsVisible="{Binding GenresText, Converter={StaticResource StringNotEmpty}}" />

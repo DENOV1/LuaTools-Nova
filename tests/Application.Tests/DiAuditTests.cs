@@ -39,9 +39,9 @@ public sealed class FakeDialogService : IDialogService
 {
     public bool ConfirmResult = true;
     public List<(string Title, string Body)> Shown = new();
-    public bool Confirm(string title, string body) { Shown.Add((title, body)); return ConfirmResult; }
-    public bool ConfirmWithCancel(string title, string body) => Confirm(title, body);
-    public void Info(string title, string body) { Shown.Add((title, body)); }
+    public Task<bool> ConfirmAsync(string title, string body) { Shown.Add((title, body)); return Task.FromResult(ConfirmResult); }
+    public Task<bool> ConfirmWithCancelAsync(string title, string body) => ConfirmAsync(title, body);
+    public Task InfoAsync(string title, string body) { Shown.Add((title, body)); return Task.CompletedTask; }
 }
 
 public sealed class FakeToastService : IToastService

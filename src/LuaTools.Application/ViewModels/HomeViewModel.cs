@@ -141,6 +141,24 @@ public partial class HomeViewModel : ObservableObject
     [RelayCommand] private void OpenPlugin() => NavigateToPlugin?.Invoke();
     [RelayCommand] private void OpenManage() => NavigateToManage?.Invoke();
     [RelayCommand] private void OpenSettings() => NavigateToSettings?.Invoke();
+
+    /// <summary>v1.0.3 bug 5/6: the Home "Steam" row was mis-bound to OpenSettings (it looked like a
+    /// second, emptier Settings button). It is now the Restart Steam control the original has —
+    /// backed by ProcessControl's Linux-native stop/start ladder (shutdown → SIGTERM → SIGKILL,
+    /// systemd-unit fast path on SteamOS/Bazzite).</summary>
+    public bool IsSteamRunning => _svc.ProcessControl.IsSteamRunning();
+
+    [RelayCommand]
+    private async Task RestartSteamAsync()
+    {
+        if (!await _svc.Get<IDialogService>().ConfirmAsync("Restart Steam",
+                "Restart Steam now? This closes Steam and any running games, then relaunches it."))
+            return;
+        bool ok = await Task.Run(() => _svc.ProcessControl.RestartSteam());
+        OnPropertyChanged(nameof(IsSteamRunning));
+        if (!ok) await _svc.Get<IDialogService>().InfoAsync("Restart Steam", "Couldn't find or launch Steam. Set its location in Settings.");
+        else _svc.Get<IToastService>().Show("Steam", "Steam restarted. Library changes are now active.");
+    }
     [RelayCommand] private void OpenMode() => NavigateToMode?.Invoke();
 
     public async Task LoadAsync()

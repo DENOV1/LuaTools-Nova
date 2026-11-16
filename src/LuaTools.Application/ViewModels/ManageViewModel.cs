@@ -150,23 +150,30 @@ public partial class ManageViewModel : PagedListViewModel<LuaTileViewModel>
             error: true);
 
     [RelayCommand]
-    private void Delete(LuaTileViewModel tile)
+    private async Task DeleteAsync(LuaTileViewModel tile)
     {
-        if (!_svc.Get<IDialogService>().Confirm("Remove lua file",
+        if (IsDeleting) return; // no re-entry while an operation is running
+        if (!await _svc.Get<IDialogService>().ConfirmAsync("Remove lua file",
                 $"Remove \"{tile.Name}\" (App ID {tile.AppId})?\n\nThis deletes its .lua file from Steam's config/stplug-in."))
             return;
 
+        IsDeleting = true;
         try
         {
-            if (File.Exists(tile.FilePath)) File.Delete(tile.FilePath);
+            string path = tile.FilePath;
+            Exception? failure = await Task.Run(() =>
+            {
+                try { if (File.Exists(path)) File.Delete(path); return null; }
+                catch (Exception ex) { return ex; } // off the UI thread: never freeze the window
+            });
+            if (failure is not null)
+            {
+                await _svc.Get<IDialogService>().InfoAsync("Remove failed", $"Couldn't delete the file:\n{failure.Message}");
+                return;
+            }
+            RemoveTile(tile);
         }
-        catch (Exception ex)
-        {
-            _svc.Get<IDialogService>().Info("Remove failed", $"Couldn't delete the file:\n{ex.Message}");
-            return;
-        }
-
-        RemoveTile(tile);
+        finally { IsDeleting = false; }
     }
 
     private void RecountSelection() => SelectedCount = _all.Count(t => t.IsSelected);
@@ -178,33 +185,53 @@ public partial class ManageViewModel : PagedListViewModel<LuaTileViewModel>
         SelectedCount = 0;
     }
 
+    [ObservableProperty] private bool _isDeleting; // drives progress state + re-entry guard
+
     [RelayCommand]
-    private void DeleteSelected()
+    private async Task DeleteSelectedAsync()
     {
+        if (IsDeleting) return; // double-click / re-entry protection
         var targets = _all.Where(t => t.IsSelected).ToList();
         if (targets.Count == 0) return;
 
-        if (!_svc.Get<IDialogService>().Confirm("Remove lua files",
+        if (!await _svc.Get<IDialogService>().ConfirmAsync("Remove lua files",
                 $"Remove {targets.Count} lua files?\n\nThis deletes the .lua files from Steam's config/stplug-in."))
             return;
 
-        int failed = 0;
-        foreach (var t in targets)
+        IsDeleting = true;
+        try
         {
-            try
+            var paths = targets.Select(t => t.FilePath).ToList();
+            // Filesystem work off the UI thread — the v1.0.2 freeze was the sync dialog, but the
+            // deletions belong on a worker thread all the same (NFS/network mounts can stall).
+            HashSet<string> deleted = await Task.Run(() =>
             {
-                if (File.Exists(t.FilePath)) File.Delete(t.FilePath);
+                var ok = new HashSet<string>(StringComparer.Ordinal);
+                foreach (string path in paths)
+                {
+                    try { if (File.Exists(path)) File.Delete(path); ok.Add(path); }
+                    catch { /* counted below */ }
+                }
+                return ok;
+            });
+
+            foreach (var t in targets)
+            {
+                if (!deleted.Contains(t.FilePath)) continue;
                 t.SelectionChanged = null;
                 _all.Remove(t);
                 if (SelectedTile == t) CloseDetail();
             }
-            catch { failed++; }
-        }
-        ApplyFilter();
-        SelectedCount = _all.Count(t => t.IsSelected);
+            ApplyFilter();
+            SelectedCount = _all.Count(t => t.IsSelected);
 
-        if (failed > 0)
-            _svc.Get<IDialogService>().Info("Remove failed", $"{failed} files couldn't be deleted.");
+            int failed = targets.Count - deleted.Count;
+            if (failed > 0)
+                await _svc.Get<IDialogService>().InfoAsync("Remove failed", $"{failed} of {targets.Count} files couldn't be deleted (they may be read-only or in use).");
+            else
+                _svc.Get<IToastService>().Show("Removed", $"{deleted.Count} lua file(s) removed from Steam.");
+        }
+        finally { IsDeleting = false; }
     }
 
     private void RemoveTile(LuaTileViewModel tile)

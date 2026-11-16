@@ -6,6 +6,18 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace LuaTools.Integration.Tests;
 
+/// <summary>Locator over a real temp Steam root (Manage/install integration tests).</summary>
+public sealed class TempRootLocator(string root) : ISteamLocator
+{
+    public string? AutoDetectedPath => root;
+    public string? EffectivePath => root;
+    public bool IsOverridden => false;
+    public bool IsValid => true;
+    public string ClientExecutableFor(string steamPath) => Path.Combine(steamPath, "steam.sh");
+    public string? SteamLanguage => null;
+    public string DetectionSource => "test-root";
+}
+
 public sealed class HeadlessSteamLocator : ISteamLocator
 {
     public string? AutoDetectedPath => null;
@@ -42,9 +54,9 @@ public sealed class HeadlessSystemIntegrations : ISystemIntegrations
 public sealed class HeadlessDialogService : IDialogService
 {
     public bool ConfirmResult = true;
-    public bool Confirm(string title, string body) => ConfirmResult;
-    public bool ConfirmWithCancel(string title, string body) => ConfirmResult;
-    public void Info(string title, string body) { }
+    public Task<bool> ConfirmAsync(string title, string body) => Task.FromResult(ConfirmResult);
+    public Task<bool> ConfirmWithCancelAsync(string title, string body) => Task.FromResult(ConfirmResult);
+    public Task InfoAsync(string title, string body) => Task.CompletedTask;
 }
 
 public sealed class HeadlessToastService : IToastService
@@ -55,11 +67,15 @@ public sealed class HeadlessToastService : IToastService
 
 public static class HeadlessHarness
 {
-    public static NovaServices Build()
+    public static NovaServices Build() => Build(null, null);
+
+    public static NovaServices Build(IProcessControl? processControl) => Build(processControl, null);
+
+    public static NovaServices Build(IProcessControl? processControl, string? steamRoot)
     {
         return new NovaServices(
-            steamLocator: new HeadlessSteamLocator(),
-            processControl: new HeadlessProcessControl(),
+            steamLocator: steamRoot is null ? new HeadlessSteamLocator() : new TempRootLocator(steamRoot),
+            processControl: processControl ?? new HeadlessProcessControl(),
             integrations: new HeadlessSystemIntegrations(),
             dispatcher: action => Avalonia.Threading.Dispatcher.UIThread.Post(action),
             configure: services =>

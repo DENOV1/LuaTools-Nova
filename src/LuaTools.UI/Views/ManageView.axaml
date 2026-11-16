@@ -182,7 +182,7 @@
                            Text="{Binding SelectionLabel}" />
                 <StackPanel Grid.Column="1" Orientation="Horizontal">
                     <Button Padding="10,5" Margin="0,0,8,0" Content="Clear" Command="{Binding ClearSelectionCommand}" />
-                    <Button Padding="10,5" Content="Delete selected" Command="{Binding DeleteSelectedCommand}" />
+                    <Button Padding="10,5" Content="Delete selected" Command="{Binding DeleteSelectedCommand}" IsEnabled="{Binding !IsDeleting}" />
                 </StackPanel>
             </Grid>
         </Border>

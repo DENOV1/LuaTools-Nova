@@ -364,11 +364,11 @@ public partial class BuildsViewModel : PagedListViewModel<LuaTileViewModel>
     }
 
     [RelayCommand]
-    private void DeleteVariant()
+    private async Task DeleteVariantAsync()
     {
         if (ActiveGame is not { } game || SelectedVariant?.Variant is not { } variant) return;
 
-        if (!_svc.Get<IDialogService>().Confirm("Delete this preset?",
+        if (!await _svc.Get<IDialogService>().ConfirmAsync("Delete this preset?",
                 $"\"{variant.DisplayLabel}\" will be removed from your saved presets. This doesn't affect the game itself."))
             return;
 

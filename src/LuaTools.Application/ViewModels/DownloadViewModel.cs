@@ -106,6 +106,42 @@ public partial class DownloadViewModel : ObservableObject
     /// <summary>Header art for the details card (original binds Details.HeaderImage the same way).</summary>
     public string? DetailsHeaderUrl => Details?.HeaderImage;
 
+    // ── Store price (v1.0.3 feature: Steam store pricing in the details card) ──
+    [ObservableProperty] private string? _priceFinal;
+    [ObservableProperty] private string? _priceInitial;
+    [NotifyPropertyChangedFor(nameof(HasDiscount), nameof(PriceLine))]
+    [ObservableProperty] private bool _priceUnavailable;
+    public bool HasDiscount => PriceInitial is not null;
+    public string? PriceLine => PriceUnavailable ? "Price unavailable"
+        : PriceFinal is null ? null
+        : HasDiscount ? $"{PriceInitial} → {PriceFinal}"
+        : PriceFinal;
+
+    // (_details already carries NotifyPropertyChangedFor/NotifyCanExecuteChangedFor — the command
+    //  re-queries and HasDetails/ShowFeatured/DetailsHeaderUrl recompute on every change.)
+    partial void OnDetailsChanged(GameDetails? value)
+    {
+        PriceFinal = PriceInitial = null;
+        PriceUnavailable = false;
+        if (value is null) return;
+        _ = LoadPriceAsync(value.AppId);
+    }
+
+    private async Task LoadPriceAsync(long appId)
+    {
+        try
+        {
+            var price = await _svc.Store.GetPriceAsync(appId);
+            // Ignore stale results if the selection changed while loading.
+            if (Details is not { } d || d.AppId != appId) return;
+            if (price is null) { PriceUnavailable = true; return; }
+            PriceFinal = price.IsFree ? "Free" : price.FinalFormatted;
+            PriceInitial = price.InitialFormatted;
+            PriceUnavailable = false;
+        }
+        catch { PriceUnavailable = true; } // honest: never fabricate a price
+    }
+
     public bool HasDetails => Details is not null;
     public string GenresText => Details is null ? "" : string.Join(", ", Details.Genres);
 
@@ -176,6 +212,11 @@ public partial class DownloadViewModel : ObservableObject
     {
         _silentInstall = onComplete is not null;
         _lastEnqueued = null;
+        // v1.0.3 bug 2: this used to set FastFetch = true, whose setter PERSISTS to settings.json —
+        // one protocol launch permanently switched the user's Fetch flow to silent auto-download
+        // (the app then "proceeds directly" instead of showing the source/confirm interface).
+        // Flip it only for the duration of the protocol flow, then restore the user's choice.
+        bool savedFastFetch = FastFetch;
         FastFetch = true;
         _suppressSearch = true;
         SearchText = appId.ToString();
@@ -208,6 +249,8 @@ public partial class DownloadViewModel : ObservableObject
                 onComplete(Error ?? "Something went wrong. Check your connection and try again.", true);
             _silentInstall = false;
         }
+
+        FastFetch = savedFastFetch; // restore the user's persisted choice
     }
 
     public async Task StartPluginAddAsync(long appId)
@@ -385,7 +428,20 @@ public partial class DownloadViewModel : ObservableObject
             }
             else
             {
-                var statuses = await _svc.Api.CheckSourcesAsync(Details.AppId.ToString());
+                Dictionary<string, string> statuses;
+                bool backendFailed = false;
+                try
+                {
+                    statuses = await _svc.Api.CheckSourcesAsync(Details.AppId.ToString());
+                }
+                catch (ApiException ex)
+                {
+                    // v1.0.3: distinct message for backend/network failure (was "No available sources").
+                    Error = ex.Message;
+                    NovaLog.Warn("fetch", $"source check failed for {Details.AppId}: {ex.Message}");
+                    backendFailed = true;
+                    statuses = new Dictionary<string, string>();
+                }
                 await AddHubcapSourceAsync(statuses, Details.AppId.ToString());
 
                 foreach (var (name, status) in statuses.OrderByDescending(kv => SourceMeta.Get(kv.Key).RequiresUserKey ? 1 : 0))
@@ -398,7 +454,13 @@ public partial class DownloadViewModel : ObservableObject
                     var best = Sources.FirstOrDefault(s => s.CanDownload);
                     if (best is null)
                     {
-                        Error = "No available sources found for this game";
+                        bool signedIn = !_svc.Auth.IsGuest;
+                        bool hasKey = !string.IsNullOrEmpty(_svc.Settings.HubcapApiKey);
+                        var gated = Sources.Any(s => s.IsAvailable);
+                        var outcome = SourceDiagnostics.Classify(
+                            statuses, backendFailed, anyRowCanDownload: false,
+                            anyRowGated: gated && (signedIn ? !hasKey : true));
+                        Error = outcome.Message;
                         return;
                     }
                     _fastFetchSource = best.DisplayName;
@@ -499,6 +561,17 @@ public partial class DownloadViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private async Task RestartSteamAsync()
+    {
+        if (!await _svc.Get<IDialogService>().ConfirmAsync("Restart Steam",
+                "Restart Steam now? This closes Steam and any running games, then relaunches it."))
+            return;
+        bool ok = await Task.Run(() => _svc.ProcessControl.RestartSteam());
+        if (!ok) await _svc.Get<IDialogService>().InfoAsync("Restart Steam", "Couldn't find or launch Steam. Set its location in Settings.");
+        else _svc.Get<IToastService>().Show("Steam", "Steam restarted. Library changes are now active.");
+    }
+
+    [RelayCommand]
     private async Task GenerateDlcAsync()
     {
         if (Details?.BaseAppId is null) return;
@@ -533,6 +606,15 @@ public partial class DownloadViewModel : ObservableObject
             {
                 InstallStatus += $" · via {_fastFetchSource}";
                 _fastFetchSource = null;
+            }
+            // v1.0.3 bug 1: the lua file IS installed, but Steam only shows library entries from
+            // config/stplug-in after a restart (the original says the same). Say it explicitly
+            // and point at the exact Steam root so a wrong-root situation is diagnosable.
+            if (result.Ok)
+            {
+                string? root = _svc.Steam.EffectivePath;
+                InstallStatus += $" · Restart Steam to see it in your library"
+                    + (root is null ? "" : $" (Steam root: {root})");
             }
         }
 

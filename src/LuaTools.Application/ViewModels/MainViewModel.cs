@@ -11,6 +11,7 @@ public partial class MainViewModel : ObservableObject
     private readonly AuthServiceProxy _auth;
     private readonly IProcessControl _steam;
     private readonly IDialogService _dialogs;
+    private readonly IToastService? _toast;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsRealUser), nameof(FooterStatus))]
@@ -27,12 +28,13 @@ public partial class MainViewModel : ObservableObject
     public OnboardingViewModel Onboarding { get; }
 
     public MainViewModel(AuthServiceProxy auth, IProcessControl steam, OnboardingViewModel onboarding,
-        IDialogService dialogs)
+        IDialogService dialogs, IToastService? toast = null)
     {
         _auth = auth;
         _steam = steam;
         Onboarding = onboarding;
         _dialogs = dialogs;
+        _toast = toast;
         _auth.AuthStateChanged += () => IsGuest = _auth.IsGuest;
     }
 
@@ -54,13 +56,24 @@ public partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void RestartSteam()
+    private async Task RestartSteamAsync()
     {
-        if (!_dialogs.Confirm("Restart Steam", "Restart Steam now? This closes Steam and any running games, then relaunches it."))
+        if (!_steam.IsSteamRunning())
+        {
+            await _dialogs.InfoAsync("Restart Steam", "Steam is not running. Nova will start it.");
+        }
+
+        if (!await _dialogs.ConfirmAsync("Restart Steam",
+                "Restart Steam now? This closes Steam and any running games, then relaunches it."))
             return;
 
-        if (!_steam.RestartSteam())
-            _dialogs.Info("Restart Steam", "Couldn't find or launch Steam. Set its location in Settings.");
+        // Linux-native stop/start (ProcessControl): graceful `steam -shutdown` → SIGTERM → SIGKILL,
+        // systemd-unit fast path on SteamOS/Bazzite. Runs on a worker thread — never block the UI.
+        bool ok = await Task.Run(() => _steam.RestartSteam());
+        if (!ok)
+            await _dialogs.InfoAsync("Restart Steam", "Couldn't find or launch Steam. Set its location in Settings.");
+        else
+            _toast?.Show("Steam", "Steam restarted. Library changes are now active.");
     }
 }
 

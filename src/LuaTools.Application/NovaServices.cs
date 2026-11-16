@@ -62,6 +62,7 @@ public sealed class NovaServices : IDisposable
     public UnlockerServiceProxy Unlocker { get; }
     public LuaToolsApiClient Api { get; }
     public HubcapService Hubcap { get; }
+    public SteamStoreService Store { get; }
     public DownloadQueue Queue { get; }
     public ManifestJobFactory Jobs { get; }
     public SteamAppInfoCache AppInfo { get; }
@@ -93,9 +94,11 @@ public sealed class NovaServices : IDisposable
         bool validateOnBuild = true,
         ILoggerFactory? loggerFactory = null)
     {
+        NovaLog.Initialize(Path.Combine(NovaPaths.DataDir, "logs"));
         Settings = new SettingsService(NovaPaths.ConfigDir);
         Cache = new CacheService(NovaPaths.DataDir);
         Steam = steamLocator ?? new SteamPathLocator(Settings.SteamPathOverride);
+        Store = new SteamStoreService(Steam);
         ProcessControl = processControl ?? new ProcessControl(Steam);
         Integrations = integrations ?? new SystemIntegrations();
 
@@ -143,6 +146,7 @@ public sealed class NovaServices : IDisposable
         services.AddSingleton(Cache);
         services.AddSingleton(Steam);
         services.AddSingleton(ProcessControl);
+        services.AddSingleton(Store);
         services.AddSingleton(Integrations);
         services.AddSingleton(Vault);
         services.AddSingleton(Installer);

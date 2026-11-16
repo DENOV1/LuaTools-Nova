@@ -75,10 +75,10 @@ public partial class App : AvApp
         fixesVm.RequestSignIn = () => RunSignInAsync(mainVm);
         settingsVm.RequestSignIn = () => RunSignInAsync(mainVm);
         settingsVm.RequestRestartPrompt = () =>
-            dialogs.Info("Language changed", "Restart LuaTools Nova to apply the new language everywhere.");
+            _ = dialogs.InfoAsync("Language changed", "Restart LuaTools Nova to apply the new language everywhere.");
         manageVm.NavigateToAdd = _ => navigation.NavigateTo("add");
         manageVm.NavigateToBuilds = appId => { navigation.NavigateTo("builds"); _ = buildsVm.SelectAppAsync(appId); };
-        manageVm.OpenLaunchOptions = (appId, name) => dialogs.Info("Launch options",
+        manageVm.OpenLaunchOptions = (appId, name) => _ = dialogs.InfoAsync("Launch options",
             $"Launch options editing for {name} (App {appId}) edits Steam's appinfo.vdf and requires closing Steam. This editor opens from the game's context menu.");
         buildsVm.NavigateToManage = appId => { navigation.NavigateTo("manage"); _ = manageVm.OpenDetailForAppIdAsync(appId); };
         downloadsVm.RevealItem = item => navigation.NavigateTo("downloads");

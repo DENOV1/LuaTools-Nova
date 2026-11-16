@@ -12,20 +12,22 @@ namespace LuaTools.UI.Services;
 
 public sealed class DialogServiceImpl : IDialogService
 {
-    public bool Confirm(string title, string body)
+    // v1.0.2 bug fix: these used `.GetAwaiter().GetResult()` from UI-thread commands — blocking
+    // the UI thread on a dialog that itself needs the UI thread = app freeze (Manage delete).
+    public async Task<bool> ConfirmAsync(string title, string body)
     {
         var window = App.Main;
         if (window is null) return false;
-        return window.ConfirmAsync(title, body).GetAwaiter().GetResult();
+        return await window.ConfirmAsync(title, body);
     }
 
-    public bool ConfirmWithCancel(string title, string body) => Confirm(title, body);
+    public Task<bool> ConfirmWithCancelAsync(string title, string body) => ConfirmAsync(title, body);
 
-    public void Info(string title, string body)
+    public async Task InfoAsync(string title, string body)
     {
         var window = App.Main;
         if (window is null) return;
-        window.InfoAsync(title, body).GetAwaiter().GetResult();
+        await window.InfoAsync(title, body);
     }
 }
 

@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using LuaTools.Core.Downloads;
 using LuaTools.Core.Models;
+using LuaTools.Core.Services;
 using LuaTools.Infrastructure.Network;
 
 namespace LuaTools.Infrastructure.Clients;
@@ -136,8 +137,23 @@ public sealed class LuaToolsApiClient
     {
         var req = new HttpRequestMessage(HttpMethod.Get, $"{AppConfig.ManifestBackendUrl}/check_apis?appid={appid}");
         req.Headers.TryAddWithoutValidation("User-Agent", AppConfig.ManifestBackendUserAgent);
-        var res = await _http.SendAsync(req, ct);
-        if (!res.IsSuccessStatusCode) return new Dictionary<string, string>();
+        HttpResponseMessage res;
+        try
+        {
+            res = await _http.SendAsync(req, ct);
+        }
+        catch (Exception ex)
+        {
+            // v1.0.3: a network failure here used to be swallowed into "no sources". Distinguish it.
+            NovaLog.Error("sources", $"check_apis network failure for {appid}: {ex.Message}");
+            throw new ApiException($"Source backend unreachable ({ex.GetType().Name}). The manifest backend may be down or blocked.");
+        }
+        if (!res.IsSuccessStatusCode)
+        {
+            NovaLog.Error("sources", $"check_apis HTTP {(int)res.StatusCode} for {appid}");
+            throw new ApiException($"Source backend returned HTTP {(int)res.StatusCode}. It may be temporarily down.");
+        }
+        NovaLog.Info("sources", $"check_apis OK for {appid}");
         return await ReadJsonAsync<Dictionary<string, string>>(res, ct) ?? new Dictionary<string, string>();
     }
 

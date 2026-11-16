@@ -511,7 +511,7 @@ public partial class PluginViewModel : ObservableObject
     private async Task Install()
     {
         if (IsBusy) return;
-        if (!_svc.Get<IDialogService>().Confirm("Install plugin",
+        if (!await _svc.Get<IDialogService>().ConfirmAsync("Install plugin",
                 "The plugin frontend will be installed; Nova's store-page bridge needs Steam relaunched with CEF debugging enabled. Continue?"))
             return;
 

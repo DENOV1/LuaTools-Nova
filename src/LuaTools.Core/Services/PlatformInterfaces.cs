@@ -39,12 +39,14 @@ public interface ISystemIntegrations
     void ExitApplication();
 }
 
-/// <summary>UI-level services the application layer needs (implemented by the Avalonia host).</summary>
+/// <summary>UI-level services the application layer needs (implemented by the Avalonia host).
+/// Dialog methods are async by design: blocking the UI thread on a dialog that itself needs the
+/// UI thread deadlocks the whole app (the v1.0.2 Manage-delete freeze — root cause).</summary>
 public interface IDialogService
 {
-    bool Confirm(string title, string body);
-    bool ConfirmWithCancel(string title, string body);
-    void Info(string title, string body);
+    Task<bool> ConfirmAsync(string title, string body);
+    Task<bool> ConfirmWithCancelAsync(string title, string body);
+    Task InfoAsync(string title, string body);
 }
 
 public interface IToastService

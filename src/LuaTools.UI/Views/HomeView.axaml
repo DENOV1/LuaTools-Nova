@@ -43,18 +43,36 @@
             <!-- Status rows -->
             <Border Classes="glass-card" Padding="16,10" Margin="0,12,0,0">
                 <StackPanel>
+                    <Grid Margin="6,5">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <fa:SymbolIcon Symbol="{x:Static fa:Symbol.Games}" Foreground="{DynamicResource TextSecondary}" />
+                        <StackPanel Grid.Column="1" Margin="10,0,0,0">
+                            <TextBlock FontSize="12.5" Foreground="{DynamicResource TextBody}" Text="Steam" />
+                            <TextBlock FontSize="11.5" Foreground="{DynamicResource TextMuted}"
+                                       Text="{Binding SteamStatus}" TextWrapping="Wrap" />
+                        </StackPanel>
+                        <!-- v1.0.3: this row previously navigated to Settings (a duplicate, emptier
+                             Settings entry). It is now the Restart Steam control. -->
+                        <Button Grid.Column="2" Padding="10,4" VerticalAlignment="Center"
+                                Command="{Binding RestartSteamCommand}" Content="Restart Steam" />
+                    </Grid>
+                    <Separator Margin="6,4" Background="{DynamicResource RowDivider}" Height="1" />
                     <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" Background="Transparent"
-                            BorderThickness="0" Padding="6,5" Command="{Binding OpenSettingsCommand}" Cursor="Hand">
+                            BorderThickness="0" Padding="6,5" Command="{Binding OpenSettingsCommand}" Cursor="Hand" IsHitTestVisible="False">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
-                            <fa:SymbolIcon Symbol="{x:Static fa:Symbol.Games}" Foreground="{DynamicResource TextSecondary}" />
+                            <fa:SymbolIcon Symbol="{x:Static fa:Symbol.Setting}" Foreground="{DynamicResource TextSecondary}" />
                             <StackPanel Grid.Column="1" Margin="10,0,0,0">
-                                <TextBlock FontSize="12.5" Foreground="{DynamicResource TextBody}" Text="Steam" />
+                                <TextBlock FontSize="12.5" Foreground="{DynamicResource TextBody}" Text="Settings" />
                                 <TextBlock FontSize="11.5" Foreground="{DynamicResource TextMuted}"
-                                           Text="{Binding SteamStatus}" TextWrapping="Wrap" />
+                                           Text="Language, appearance, advanced options" />
                             </StackPanel>
                         </Grid>
                     </Button>
