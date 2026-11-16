@@ -1,0 +1,145 @@
+<Application
+    x:Class="LuaTools.UI.App"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="clr-namespace:LuaTools.UI"
+    xmlns:conv="clr-namespace:LuaTools.UI.Converters"
+    xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
+    xmlns:fastyling="clr-namespace:FluentAvalonia.Styling;assembly=FluentAvalonia"
+    RequestedThemeVariant="Dark">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries />
+
+            <!-- ═══ Design tokens — extracted from the original WPF-UI dark theme + the app's
+                 hand-tuned glass palette (ANALYSIS/UI_DESIGN_ANALYSIS.md). ═══ -->
+            <Color x:Key="NovaBase">#202020</Color>
+            <SolidColorBrush x:Key="NovaBaseBrush" Color="#202020" />
+
+            <!-- Glass cards -->
+            <SolidColorBrush x:Key="CardBg" Color="#0DFFFFFF" />
+            <SolidColorBrush x:Key="CardBgSubtle" Color="#08FFFFFF" />
+            <SolidColorBrush x:Key="CardBorder" Color="#14FFFFFF" />
+            <SolidColorBrush x:Key="CardBorderStrong" Color="#1FFFFFFF" />
+            <SolidColorBrush x:Key="CardBgHover" Color="#18FFFFFF" />
+            <SolidColorBrush x:Key="CardBorderHover" Color="#33FFFFFF" />
+            <SolidColorBrush x:Key="RowHover" Color="#14FFFFFF" />
+            <SolidColorBrush x:Key="RowDivider" Color="#10FFFFFF" />
+
+            <!-- Accent (violet) -->
+            <SolidColorBrush x:Key="AccentBrush" Color="#a78bfa" />
+            <SolidColorBrush x:Key="AccentChipBg" Color="#2a2440" />
+            <SolidColorBrush x:Key="AccentChipFg" Color="#c4b5fd" />
+            <SolidColorBrush x:Key="AccentDim" Color="#14a78bfa" />
+            <SolidColorBrush x:Key="AccentDimBorder" Color="#40a78bfa" />
+
+            <!-- Status -->
+            <SolidColorBrush x:Key="SuccessBrush" Color="#34d399" />
+            <SolidColorBrush x:Key="SuccessBadgeBg" Color="#1422c55e" />
+            <SolidColorBrush x:Key="SuccessBadgeBorder" Color="#3022c55e" />
+            <SolidColorBrush x:Key="ErrorBrush" Color="#f87171" />
+            <SolidColorBrush x:Key="WarningBrush" Color="#fbbf24" />
+            <SolidColorBrush x:Key="WarnBadgeBg" Color="#20f59e0b" />
+            <SolidColorBrush x:Key="WarnText" Color="#f0a868" />
+            <SolidColorBrush x:Key="WarnDim" Color="#0Ff97316" />
+            <SolidColorBrush x:Key="WarnDimBorder" Color="#38f97316" />
+            <SolidColorBrush x:Key="OrangeBrush" Color="#f97316" />
+            <SolidColorBrush x:Key="InfoBrush" Color="#38bdf8" />
+            <SolidColorBrush x:Key="InfoBannerBg" Color="#1A3b82f6" />
+            <SolidColorBrush x:Key="InfoBannerBorder" Color="#333b82f6" />
+            <SolidColorBrush x:Key="InfoText" Color="#93c5fd" />
+            <SolidColorBrush x:Key="RecommendedBadgeBg" Color="#202563eb" />
+            <SolidColorBrush x:Key="RecommendedBadgeFg" Color="#60a5fa" />
+
+            <!-- Shared-depot chip -->
+            <SolidColorBrush x:Key="SharedChipBg" Color="#3a3320" />
+            <SolidColorBrush x:Key="SharedChipFg" Color="#d6b36b" />
+
+            <!-- Text -->
+            <SolidColorBrush x:Key="TextPrimary" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="TextBody" Color="#d1d5db" />
+            <SolidColorBrush x:Key="TextBright" Color="#e5e7eb" />
+            <SolidColorBrush x:Key="TextSecondary" Color="#9ca3af" />
+            <SolidColorBrush x:Key="TextMuted" Color="#6b7280" />
+            <SolidColorBrush x:Key="TextFaint" Color="#4b5563" />
+
+            <!-- Overlays / dialogs -->
+            <SolidColorBrush x:Key="Scrim" Color="#99000000" />
+            <SolidColorBrush x:Key="DialogBg" Color="#1c1c22" />
+            <SolidColorBrush x:Key="DialogBorder" Color="#33FFFFFF" />
+            <SolidColorBrush x:Key="SelectionBar" Color="#1f1f27" />
+            <SolidColorBrush x:Key="DropdownBg" Color="#14141c" />
+            <SolidColorBrush x:Key="MonospacePin" Color="#8b96f0" />
+            <SolidColorBrush x:Key="MonospacePinDim" Color="#4b5563" />
+
+            <!-- Converters -->
+            <conv:BoolToErrorBrushConverter x:Key="BoolToErrorBrush" />
+            <conv:NotNullToBoolConverter x:Key="NotNullToBool" />
+            <conv:InverseBoolConverter x:Key="InverseBool" />
+            <conv:BytesToSizeConverter x:Key="BytesToSize" />
+            <conv:StringNotEmptyConverter x:Key="StringNotEmpty" />
+            <conv:NotDefaultConverter x:Key="NotDefault" />
+
+            <!-- ── Styles ── -->
+            <Style x:Key="NovaPageTitle" Selector="TextBlock.page-title">
+                <Setter Property="FontSize" Value="22" />
+                <Setter Property="FontWeight" Value="Bold" />
+                <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+            </Style>
+
+            <Style x:Key="NovaSectionHeader" Selector="TextBlock.section-header">
+                <Setter Property="FontSize" Value="13" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+                <Setter Property="Foreground" Value="{DynamicResource TextSecondary}" />
+                <Setter Property="Margin" Value="0,24,0,8" />
+            </Style>
+
+            <Style x:Key="NovaSubtitle" Selector="TextBlock.subtitle">
+                <Setter Property="FontSize" Value="13" />
+                <Setter Property="Foreground" Value="{DynamicResource TextSecondary}" />
+            </Style>
+
+            <Style x:Key="GlassCard" Selector="Border.glass-card">
+                <Setter Property="Background" Value="{DynamicResource CardBg}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource CardBorder}" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="CornerRadius" Value="10" />
+            </Style>
+
+            <Style x:Key="GlassCardSubtle" Selector="Border.glass-card-subtle">
+                <Setter Property="Background" Value="{DynamicResource CardBgSubtle}" />
+                <Setter Property="BorderBrush" Value="#12FFFFFF" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="CornerRadius" Value="8" />
+            </Style>
+
+            <Style x:Key="GlassCardHover" Selector="Border.glass-card:pointerover">
+                <Setter Property="Background" Value="{DynamicResource CardBgHover}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource CardBorderHover}" />
+            </Style>
+
+            <Style x:Key="ChipBase" Selector="Border.chip">
+                <Setter Property="Padding" Value="7,2" />
+                <Setter Property="CornerRadius" Value="4" />
+            </Style>
+
+            <Style x:Key="ChipText" Selector="TextBlock.chip-text">
+                <Setter Property="FontSize" Value="10.5" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+            </Style>
+
+            <Style x:Key="StatusPill" Selector="TextBlock.status-pill">
+                <Setter Property="FontSize" Value="11.5" />
+            </Style>
+
+        </ResourceDictionary>
+    </Application.Resources>
+
+    <Application.Styles>
+        <fastyling:FluentAvaloniaTheme />
+        <!-- All page roots use the app's body text color -->
+        <Style Selector="UserControl">
+            <Setter Property="Foreground" Value="{DynamicResource TextBody}" />
+        </Style>
+    </Application.Styles>
+</Application>

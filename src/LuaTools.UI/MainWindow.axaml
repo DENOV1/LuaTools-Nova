@@ -1,0 +1,95 @@
+<Window
+    x:Class="LuaTools.UI.MainWindow"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
+    xmlns:views="clr-namespace:LuaTools.UI.Views"
+    Title="LuaTools Nova"
+    Width="1080" Height="720"
+    MinWidth="760" MinHeight="560"
+    WindowStartupLocation="CenterScreen"
+    TransparencyBackgroundFallback="#202020"
+    TransparencyLevelHint="AcrylicBlur"
+    ExtendClientAreaToDecorationsHint="True"
+    SystemDecorations="Full">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <SolidColorBrush x:Key="NavigationViewContentBackground" Color="Transparent" />
+            <SolidColorBrush x:Key="NavigationViewExpandedPaneBackground" Color="#1A202020" />
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Panel>
+        <fa:NavigationView x:Name="Nav"
+            PaneDisplayMode="Left"
+            OpenPaneLength="190"
+            IsBackButtonVisible="False"
+            SelectionChanged="OnNavSelectionChanged">
+            <fa:NavigationView.MenuItems>
+                <fa:NavigationViewItem Content="Home" Tag="home">
+                    <fa:NavigationViewItem.IconSource>
+                        <fa:SymbolIconSource Symbol="{x:Static fa:Symbol.Home}" />
+                    </fa:NavigationViewItem.IconSource>
+                </fa:NavigationViewItem>
+                <fa:NavigationViewItem Content="Add" Tag="add">
+                    <fa:NavigationViewItem.IconSource>
+                        <fa:SymbolIconSource Symbol="{x:Static fa:Symbol.Add}" />
+                    </fa:NavigationViewItem.IconSource>
+                </fa:NavigationViewItem>
+                <fa:NavigationViewItem Content="Manage" Tag="manage">
+                    <fa:NavigationViewItem.IconSource>
+                        <fa:SymbolIconSource Symbol="{x:Static fa:Symbol.Games}" />
+                    </fa:NavigationViewItem.IconSource>
+                </fa:NavigationViewItem>
+                <fa:NavigationViewItem Content="Depots" Tag="builds">
+                    <fa:NavigationViewItem.IconSource>
+                        <fa:SymbolIconSource Symbol="{x:Static fa:Symbol.Library}" />
+                    </fa:NavigationViewItem.IconSource>
+                </fa:NavigationViewItem>
+                <fa:NavigationViewItem Content="Mode" Tag="mode">
+                    <fa:NavigationViewItem.IconSource>
+                        <fa:SymbolIconSource Symbol="{x:Static fa:Symbol.Manage}" />
+                    </fa:NavigationViewItem.IconSource>
+                </fa:NavigationViewItem>
+                <fa:NavigationViewItem Content="Fixes" Tag="fixes">
+                    <fa:NavigationViewItem.IconSource>
+                        <fa:SymbolIconSource Symbol="{x:Static fa:Symbol.Repair}" />
+                    </fa:NavigationViewItem.IconSource>
+                </fa:NavigationViewItem>
+                <fa:NavigationViewItem Content="Plugin" Tag="plugin">
+                    <fa:NavigationViewItem.IconSource>
+                        <fa:SymbolIconSource Symbol="{x:Static fa:Symbol.Code}" />
+                    </fa:NavigationViewItem.IconSource>
+                </fa:NavigationViewItem>
+            </fa:NavigationView.MenuItems>
+            <fa:NavigationView.FooterMenuItems>
+                <fa:NavigationViewItem Content="Downloads" Tag="downloads">
+                    <fa:NavigationViewItem.IconSource>
+                        <fa:SymbolIconSource Symbol="{x:Static fa:Symbol.Download}" />
+                    </fa:NavigationViewItem.IconSource>
+                </fa:NavigationViewItem>
+                <fa:NavigationViewItem Content="Settings" Tag="settings">
+                    <fa:NavigationViewItem.IconSource>
+                        <fa:SymbolIconSource Symbol="{x:Static fa:Symbol.Setting}" />
+                    </fa:NavigationViewItem.IconSource>
+                </fa:NavigationViewItem>
+            </fa:NavigationView.FooterMenuItems>
+
+            <Panel>
+                <views:HomeView x:Name="PageHome" IsVisible="False" />
+                <views:DownloadView x:Name="PageAdd" IsVisible="False" />
+                <views:ManageView x:Name="PageManage" IsVisible="False" />
+                <views:BuildsView x:Name="PageBuilds" IsVisible="False" />
+                <views:ModeView x:Name="PageMode" IsVisible="False" />
+                <views:FixesView x:Name="PageFixes" IsVisible="False" />
+                <views:PluginView x:Name="PagePlugin" IsVisible="False" />
+                <views:DownloadsView x:Name="PageDownloads" IsVisible="False" />
+                <views:SettingsView x:Name="PageSettings" IsVisible="False" />
+            </Panel>
+        </fa:NavigationView>
+
+        <!-- Onboarding overlay (same idiom as the original: scrim + centered card over blurred content) -->
+        <views:OnboardingView x:Name="OnboardingOverlay" IsVisible="False" />
+    </Panel>
+</Window>

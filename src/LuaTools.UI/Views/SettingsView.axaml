@@ -1,0 +1,159 @@
+<UserControl
+    x:Class="LuaTools.UI.Views.SettingsView"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel MaxWidth="640" Margin="8,16,8,24">
+            <TextBlock Classes="page-title" Text="Settings" />
+
+            <!-- Account -->
+            <TextBlock Classes="section-header" Text="Account" />
+            <Border Classes="glass-card-subtle">
+                <StackPanel>
+                    <StackPanel Margin="14,12" IsVisible="{Binding IsRealUser}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Border Width="40" Height="40" CornerRadius="20" Background="{DynamicResource AccentChipBg}">
+                                <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="16"
+                                           Foreground="{DynamicResource AccentChipFg}"
+                                           Text="{Binding DisplayName}" />
+                            </Border>
+                            <StackPanel Grid.Column="1" Margin="12,0" VerticalAlignment="Center">
+                                <TextBlock FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}"
+                                           Text="{Binding DisplayName}" />
+                                <TextBlock FontSize="12" Foreground="{DynamicResource TextMuted}"
+                                           Text="{Binding Email}" />
+                            </StackPanel>
+                            <Button Grid.Column="2" Padding="8,4" Command="{Binding SignOutCommand}" Content="Sign out" />
+                        </Grid>
+                    </StackPanel>
+
+                    <StackPanel Margin="14,12" IsVisible="{Binding IsGuest}">
+                        <TextBlock FontSize="12.5" Foreground="{DynamicResource TextBody}" TextWrapping="Wrap"
+                                   Text="Browsing as a guest. Sign in with Discord (or paste a /login code from the lua.tools Discord) to download." />
+                        <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                            <Button Classes="accent-button" Padding="12,5" Command="{Binding SignInCommand}"
+                                    Content="Sign in with Discord" IsVisible="{Binding !IsGuest}" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                            <TextBox Width="160" MaxLength="6" Text="{Binding CodeInput}"
+                                     Watermark="/login code" FontFamily="Consolas,monospace" />
+                            <Button Padding="10,4" Margin="6,0,0,0" Command="{Binding SignInWithCodeCommand}"
+                                    Content="Use code" IsEnabled="{Binding CanRedeemCode}" />
+                        </StackPanel>
+                        <TextBlock Margin="0,8,0,0" FontSize="11.5" Foreground="{DynamicResource ErrorBrush}"
+                                   Text="{Binding CodeError}" IsVisible="{Binding CodeError, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Steam -->
+            <TextBlock Classes="section-header" Text="Steam" />
+            <Border Classes="glass-card-subtle">
+                <StackPanel Margin="14,12">
+                    <TextBlock FontSize="12.5" Foreground="{DynamicResource TextBody}" Text="{Binding SteamPath}"
+                               TextWrapping="Wrap" />
+                    <TextBlock Margin="0,3,0,0" FontSize="11.5" Foreground="{DynamicResource TextMuted}"
+                               Text="{Binding SteamSource}" />
+                    <TextBlock Margin="0,3,0,0" FontSize="11.5" Foreground="{DynamicResource WarnText}"
+                               Text="{Binding SteamWarning}" TextWrapping="Wrap"
+                               IsVisible="{Binding SteamWarning, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                    <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                        <Button Padding="10,4" Margin="0,0,8,0" Command="{Binding OverrideSteamFolderCommand}"
+                                Content="Choose folder…" />
+                        <Button Padding="10,4" Margin="0,0,8,0" Command="{Binding ClearSteamOverrideCommand}"
+                                Content="Reset to auto-detect"
+                                IsVisible="{Binding IsSteamOverridden}" />
+                        <Button Padding="10,4" Command="{Binding OpenSteamFolderCommand}" Content="Open" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Install behavior -->
+            <TextBlock Classes="section-header" Text="Install behavior" />
+            <Border Classes="glass-card-subtle">
+                <StackPanel>
+                    <CheckBox Margin="14,12" IsChecked="{Binding AutoUpdateApps}" FontSize="12.5"
+                              Foreground="{DynamicResource TextBody}"
+                              Content="Auto Update Apps — don't lock manifests (Steam keeps games updated)" />
+                    <Separator Margin="14,0" Height="1" Background="{DynamicResource RowDivider}" />
+                    <CheckBox Margin="14,12" IsChecked="{Binding FastFetch}" FontSize="12.5"
+                              Foreground="{DynamicResource TextBody}"
+                              Content="FastFetch — download from the first available source automatically" />
+                    <Separator Margin="14,0" Height="1" Background="{DynamicResource RowDivider}" />
+                    <CheckBox Margin="14,12" IsChecked="{Binding DonateKeys}" FontSize="12.5"
+                              Foreground="{DynamicResource TextBody}"
+                              Content="Donate spare Steam decryption keys to the community pool" />
+                </StackPanel>
+            </Border>
+
+            <!-- Startup -->
+            <TextBlock Classes="section-header" Text="Startup" />
+            <Border Classes="glass-card-subtle">
+                <StackPanel>
+                    <CheckBox Margin="14,12" IsChecked="{Binding StartWithSystem}" FontSize="12.5"
+                              Foreground="{DynamicResource TextBody}"
+                              Content="Start when you log in (minimized to tray)" />
+                    <Separator Margin="14,0" Height="1" Background="{DynamicResource RowDivider}" />
+                    <CheckBox Margin="14,12" IsChecked="{Binding MinimizeToTray}" FontSize="12.5"
+                              Foreground="{DynamicResource TextBody}"
+                              Content="Closing the window minimizes to the tray instead of quitting" />
+                </StackPanel>
+            </Border>
+
+            <!-- Language & DNS -->
+            <TextBlock Classes="section-header" Text="Language &amp; DNS" />
+            <Border Classes="glass-card-subtle">
+                <StackPanel Margin="14,12">
+                    <TextBlock FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,4" Text="Language" />
+                    <ComboBox MinWidth="220" ItemsSource="{Binding LanguageOptions}"
+                              SelectedItem="{Binding SelectedLanguage}" />
+                    <TextBlock Margin="0,4,0,0" FontSize="10.5" Foreground="{DynamicResource TextFaint}"
+                               Text="English ships with Nova; the full 29-language set from the original is planned." />
+                    <TextBlock FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,14,0,4"
+                               Text="DNS resolution" />
+                    <ComboBox MinWidth="220" ItemsSource="{Binding DnsModeOptions}"
+                              SelectedItem="{Binding SelectedDnsMode}" />
+                    <TextBlock Margin="0,4,0,0" FontSize="10.5" Foreground="{DynamicResource TextFaint}" TextWrapping="Wrap"
+                               Text="Cloudflare DoH fallback for networks that block lua.tools or GitHub." />
+                </StackPanel>
+            </Border>
+
+            <!-- Hubcap -->
+            <TextBlock Classes="section-header" Text="Hubcap API key" />
+            <Border Classes="glass-card-subtle">
+                <StackPanel Margin="14,12">
+                    <TextBlock FontSize="12.5" Foreground="{DynamicResource TextBody}" TextWrapping="Wrap"
+                               Text="An optional personal key (smm_…) from hubcapmanifest.com that unlocks the Sadie (Hubcap) source with its own daily quota." />
+                    <StackPanel Orientation="Horizontal" Margin="0,10,0,0"
+                                IsVisible="{Binding HubcapIsKeyConfigured}">
+                        <TextBlock VerticalAlignment="Center" FontSize="12.5" Foreground="{DynamicResource SuccessBrush}"
+                                   Text="Key configured" />
+                        <TextBlock Margin="10,0,0,0" VerticalAlignment="Center" FontSize="12"
+                                   Foreground="{DynamicResource TextMuted}" Text="{Binding HubcapStatsText}" />
+                        <Button Padding="8,4" Margin="10,0,0,0" Command="{Binding RefreshHubcapStatsCommand}"
+                                Content="Refresh" IsEnabled="{Binding !IsRefreshingHubcapStats}" />
+                        <Button Padding="8,4" Margin="8,0,0,0" Command="{Binding ClearHubcapKeyCommand}"
+                                Content="Remove" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,10,0,0"
+                                IsVisible="{Binding !HubcapIsKeyConfigured}">
+                        <TextBox Width="420" Text="{Binding HubcapKeyInput}" Watermark="smm_…" />
+                        <Button Classes="accent-button" Padding="10,4" Margin="6,0,0,0"
+                                Command="{Binding ValidateAndSaveHubcapKeyCommand}" Content="Save"
+                                IsEnabled="{Binding CanEditHubcapKey}" />
+                    </StackPanel>
+                    <TextBlock Margin="0,8,0,0" FontSize="11.5" Foreground="{Binding HubcapKeyStatusColor}"
+                               Text="{Binding HubcapKeyStatus}" TextWrapping="Wrap"
+                               IsVisible="{Binding HubcapKeyStatus, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

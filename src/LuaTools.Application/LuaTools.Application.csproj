@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Description>LuaTools Nova - application services and view models.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+    <PackageReference Include="Markdig" Version="0.37.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.2" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\LuaTools.Core\LuaTools.Core.csproj" />
+    <ProjectReference Include="..\LuaTools.Infrastructure\LuaTools.Infrastructure.csproj" />
+    <ProjectReference Include="..\LuaTools.Linux\LuaTools.Linux.csproj" />
+    <ProjectReference Include="..\LuaTools.Integrations\LuaTools.Integrations.csproj" />
+  </ItemGroup>
+</Project>

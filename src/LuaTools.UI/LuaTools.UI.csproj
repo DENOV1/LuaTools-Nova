@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <ApplicationIcon>../../assets/icon/luatools-nova.ico</ApplicationIcon>
+    <AssemblyName>luatools-nova</AssemblyName>
+    <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Description>LuaTools Nova - Linux-native desktop client for managing Steam manifest/lua configurations.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="11.2.8" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.2.8" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.2.8" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.2.8" />
+    <PackageReference Include="Avalonia.Diagnostics" Version="11.2.8" Condition="'$(Configuration)' == 'Debug'" />
+    <PackageReference Include="FluentAvaloniaUI" Version="2.3.0" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
+    <PackageReference Include="Markdig" Version="0.37.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\LuaTools.Application\LuaTools.Application.csproj" />
+    <ProjectReference Include="..\LuaTools.Integrations\LuaTools.Integrations.csproj" />
+    <ProjectReference Include="..\LuaTools.Linux\LuaTools.Linux.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="../../assets/icon/luatools-nova.ico" CopyToOutputDirectory="PreserveNewest" Link="luatools-nova.ico" />
+    <Content Include="../../assets/icon/luatools-nova_256.png" CopyToOutputDirectory="PreserveNewest" Link="luatools-nova.png" />
+    <Content Include="../../assets/icon/luatools-nova_16.png" CopyToOutputDirectory="PreserveNewest" Link="luatools-nova_16.png" />
+  </ItemGroup>
+</Project>

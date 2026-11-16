@@ -1,0 +1,26 @@
+<UserControl
+    x:Class="LuaTools.UI.Views.DropZone"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
+    DragDrop.AllowDrop="True">
+
+    <Border Name="DropBox" MinHeight="92" Padding="16,14" CornerRadius="10"
+            Background="#0AFFFFFF" BorderBrush="#28FFFFFF" BorderThickness="1.4">
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Orientation="Horizontal">
+            <fa:SymbolIcon VerticalAlignment="Center" FontSize="22"
+                               Foreground="{DynamicResource AccentBrush}" Symbol="{x:Static fa:Symbol.Download}" />
+            <StackPanel Margin="14,0,0,0" VerticalAlignment="Center">
+                <TextBlock FontSize="13.5" FontWeight="SemiBold" Foreground="{DynamicResource TextBright}"
+                           Text="Drop lua / manifest / zip files" />
+                <TextBlock Margin="0,2,0,0" FontSize="11.5" Foreground="{DynamicResource TextSecondary}"
+                           Text="…or a SteamDB / Steam store link to install that game" />
+                <Button Margin="0,8,0,0" Padding="10,5" HorizontalAlignment="Left"
+                        Click="OnBrowseClick" Content="Browse files" FontSize="11.5" />
+                <TextBlock Margin="0,8,0,0" FontSize="12" Text="{Binding ResultText}" TextWrapping="Wrap"
+                           IsVisible="{Binding HasResult}"
+                           Foreground="{Binding ResultFailed, Converter={StaticResource BoolToErrorBrush}}" />
+            </StackPanel>
+        </StackPanel>
+    </Border>
+</UserControl>

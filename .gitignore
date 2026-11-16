@@ -1,0 +1,7 @@
+bin/
+obj/
+artifacts/
+publish/
+*.user
+.env
+release-notes.md

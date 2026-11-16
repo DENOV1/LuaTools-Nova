@@ -1,0 +1,73 @@
+<UserControl
+    x:Class="LuaTools.UI.Views.OnboardingView"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia">
+
+    <!-- Dim scrim + centered welcome card (in-window overlay, not a Popup) -->
+    <Panel Background="#66000000">
+        <Border MaxWidth="640" Margin="16" Padding="30,32" HorizontalAlignment="Center" VerticalAlignment="Center"
+                Background="{DynamicResource DialogBg}" BorderBrush="{DynamicResource DialogBorder}"
+                BorderThickness="1" CornerRadius="14">
+            <StackPanel>
+                <TextBlock FontSize="21" FontWeight="Bold" Foreground="{DynamicResource TextPrimary}"
+                           Text="Welcome to LuaTools Nova" TextWrapping="Wrap" />
+
+                <!-- Sign in (guest only) -->
+                <StackPanel IsVisible="{Binding IsGuest}">
+                    <TextBlock Margin="0,16,0,0" FontSize="13" Foreground="{DynamicResource TextSecondary}"
+                               TextWrapping="Wrap"
+                               Text="Sign in with Discord (or a /login code) to download from every source. Guests can browse, but most downloads need an account." />
+                    <StackPanel Margin="0,10,0,0" Orientation="Horizontal">
+                        <Button Classes="accent-button" Padding="12,6" Command="{Binding SignInCommand}"
+                                Content="Sign in with Discord" IsVisible="{Binding !IsSigningIn}" />
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,0" IsVisible="{Binding IsSigningIn}">
+                            <fa:ProgressRing Width="16" Height="16" IsIndeterminate="True" />
+                            <TextBlock Margin="8,0,0,0" VerticalAlignment="Center" FontSize="12"
+                                       Foreground="{DynamicResource TextSecondary}" Text="Waiting for browser…" />
+                        </StackPanel>
+                    </StackPanel>
+                    <TextBlock Margin="0,8,0,0" FontSize="11.5" Foreground="{DynamicResource ErrorBrush}"
+                               Text="{Binding StatusLine}" TextWrapping="Wrap"
+                               IsVisible="{Binding StatusLine, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                </StackPanel>
+
+                <TextBlock Classes="section-header" Margin="0,20,0,4" Text="Recommended setup" />
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock VerticalAlignment="Center" FontSize="12.5" Foreground="{DynamicResource TextBody}"
+                               MaxWidth="380" TextWrapping="Wrap"
+                               Text="Apply recommended settings (FastFetch on, Custom mode on Linux)?" />
+                    <StackPanel Orientation="Horizontal" Margin="12,0,0,0">
+                        <Button Padding="10,4" MinWidth="92" Margin="6,0,0,0" Content="Yes"
+                                Classes.accent-button="{Binding ApplyRecommended}"
+                                Command="{Binding SetApplyRecommendedCommand}" CommandParameter="True" />
+                        <Button Padding="10,4" MinWidth="92" Margin="6,0,0,0" Content="No"
+                                Classes.accent-button="{Binding !ApplyRecommended}"
+                                Command="{Binding SetApplyRecommendedCommand}" CommandParameter="False" />
+                    </StackPanel>
+                </StackPanel>
+                <TextBlock Margin="0,6,0,0" FontSize="10.5" Foreground="{DynamicResource TextFaint}" TextWrapping="Wrap"
+                           Text="On Linux the Windows unlocker DLL modes don't apply — FastFetch is the meaningful recommendation." />
+
+                <TextBlock Classes="section-header" Margin="0,16,0,4" Text="Store-page plugin" />
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock VerticalAlignment="Center" FontSize="12.5" Foreground="{DynamicResource TextBody}"
+                               MaxWidth="380" TextWrapping="Wrap"
+                               Text="Install the 'Add via LuaTools' plugin for Steam's store pages (needs Steam with -cef-enable-remote-debugging)?" />
+                    <StackPanel Orientation="Horizontal" Margin="12,0,0,0">
+                        <Button Padding="10,4" MinWidth="92" Margin="6,0,0,0" Content="Yes"
+                                Classes.accent-button="{Binding InstallPlugin}"
+                                Command="{Binding SetInstallPluginCommand}" CommandParameter="True" />
+                        <Button Padding="10,4" MinWidth="92" Margin="6,0,0,0" Content="No"
+                                Classes.accent-button="{Binding !InstallPlugin}"
+                                Command="{Binding SetInstallPluginCommand}" CommandParameter="False" />
+                    </StackPanel>
+                </StackPanel>
+
+                <Button Classes="accent-button" Margin="0,22,0,0" Padding="16,7" HorizontalAlignment="Left"
+                        Command="{Binding FinishCommand}" Content="Let's go!"
+                        IsEnabled="{Binding NotBusy}" />
+            </StackPanel>
+        </Border>
+    </Panel>
+</UserControl>
