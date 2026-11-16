@@ -1,37 +1,45 @@
 # PROJECT_STATUS — LuaTools Nova
 
-**Status: functional v1.0.0 build on Linux. 89/89 automated tests green. Self-contained linux-x64 bundle published and smoke-tested. Published to GitHub at https://github.com/DENOV1/LuaTools-Nova.**
+**Status: v1.0.1 engineering-audit complete. Startup crash fixed at the architectural level. 116/116 automated tests green. Headless UI lifecycle verified (real MainWindow + all 10 pages + navigation). Self-contained linux-x64 release build published. GitHub Release v1.0.1 published as pre-release.**
 
 Last updated: 2026-11-16
 
-## What works (verified on this machine)
+## The v1.0.0 startup crash (Linux Mint 22.3) — FIXED
 
-- Full solution builds clean (0 errors) with .NET 8 + Avalonia 11.2.8 + FluentAvalonia 2.3.0
-- 89 automated tests green: Core 56, Linux 16, Application 17, Integration 13
-- Self-contained `linux-x64` publish (99 MB) runs; reaches X11 display init (sandbox has no display server — `XOpenDisplay failed` is the expected last step headless)
-- Steam discovery: bootstrap-symlink resolution, distro layout fallbacks, Flatpak/Snap detection, language from `registry.vdf` (unit-tested)
-- Library scanning incl. `config/`+`steamapps/` vdf union (unit-tested)
-- Lua codec/parser/editor + content-addressed vault (unit-tested)
-- Manifest binary codec incl. zipped manifests (unit-tested with synthetic manifests)
-- Download queue semantics: dedupe, cancel, depot pause/resume/-validate, retry-with-progress, history cap (unit-tested)
-- Settings atomicity + corrupt→.bak recovery (unit-tested)
-- Proton compat detection + WINEDLLOVERRIDES merge semantics (unit-tested)
-- Fix records with hash-guarded backups + path containment (unit-tested)
-- Packaging: desktop entry, hicolor icon ladder, protocol handler, install/uninstall scripts, CI workflow
+```
+System.InvalidOperationException: No service for type
+'LuaTools.Application.ViewModels.UnlockerServiceProxy' has been registered.
+  at NovaServices.Get<T>() — NovaServices.cs:139
+  at ModeViewModel constructor — PageViewModels.cs:565
+  at App.OnFrameworkInitializationCompleted() — App.axaml.cs:53
+```
 
-## Network-gated features (implemented; need a live desktop + network to exercise)
+**Root cause:** split composition root. The DI container in `NovaServices` registered only domain services; `UnlockerServiceProxy`, `AuthServiceProxy`, `PluginInstallerService`, UI services (`IDialogService`/`IToastService`/`INavigationHost`) and **all 12 ViewModels** were constructed ad-hoc in `App.axaml.cs`, yet ViewModels fetched them via `svc.Get<T>()`. `ModeViewModel`'s constructor was simply the first resolution to hit an unregistered dependency; 14+ more waited behind it (MainWindow resolves 9 page VMs via `Get<T>`; `ApplicationAddFacadeImpl` resolves VMs for the plugin backend; `HomeViewModel` fetches `PluginInstallerService`).
 
-Steam search/featured/appdetails, lua.tools + Hubcap + backend source downloads, Supabase Discord OAuth / login-code sign-in, denuvo fix listings/downloads, depot downloads via the official linux-x64 DepotDownloader, plugin frontend install from LTSP releases, CDP store-page injection (needs Steam running with `-cef-enable-remote-debugging`).
+**Fix (architectural, not cosmetic):** `NovaServices` is now the single composition root — it registers every service, every proxy, the integrations layer, logging, and all 12 ViewModels; the UI layer contributes its three implementations through a `configure` callback before the container builds; the container builds with **ValidateOnBuild + ValidateScopes** so any missing constructor dependency now fails at container-build time with a precise descriptor (this exact error shape is pinned by a regression test). `ModeViewModel` and `HomeViewModel` received constructor-injected dependencies instead of service-locator calls. `MainWindow` no longer hard-casts `IToastService` to its concrete class (new `IToastPresenter` capability interface — caught by the headless tests).
 
-All these run against the exact same endpoints as the original app; their deterministic logic (parsing, merging, queueing, persistence, contracts) is covered by the test suite.
+## Verification matrix
 
-## Known gaps
+| Area | Status | How |
+|---|---|---|
+| Startup crash regression | **Passed** | `DiAuditTests.Regression_*` (resolve ModeViewModel + all 12 VMs from production-shaped container) |
+| Full DI audit | **Passed** | 10 audit tests: every domain/integration/UI service resolves; VMs are singletons; proxy wired to settings; ValidateOnBuild catches missing deps at build time |
+| All 10 UI pages | **Passed** (headless) | `HeadlessUiTests`: real MainWindow + all pages construct via compiled XAML under Avalonia headless (Skia-rendered); all 10 page DataContexts injected; navigation to every page; Show/Close lifecycle; Mode cards populate |
+| Startup/shutdown lifecycle | **Passed** (headless) | same suite — window Show→RunJobs→Close on the real app |
+| GUI rendering on a real display | **Not tested** | sandbox has no display server (honest limitation, KNOWN_ISSUES.md) |
+| Release build linux-x64 | **Passed** | `packaging/publish.sh` (Release config, tests first) → 99 MB self-contained bundle |
+| Native smoke test | **Passed** | binary executes; reaches `XOpenDisplay` (no display in sandbox — expected headless result) |
+| install.sh / uninstall.sh | **Passed** | executed with `DEST_OVERRIDE` (user-local, no sudo): files land correctly, desktop entry Exec rewritten for the actual destination (bug found+fixed), icons staged, uninstall removes app files but **preserves user data** (`~/.config/LuaToolsNova`) |
+| System (/opt) install | **Not tested** | requires root; script logic identical modulo destination |
+| Live Steam/network flows | **Not tested** | no Steam/network services in sandbox; endpoints identical to original; logic unit-tested |
+| Linux Mint 22.3 (Ubuntu 24.04 base) | **Partially verified** | Debian 13 sandbox shares the XDG/systemd/dotnet stack; XDG paths, symlink handling, permissions and env stripping are unit-tested; a real Mint desktop run is still open |
 
-See KNOWN_ISSUES.md (honest list: no display-server run in this sandbox, Windows-only tools documented as unsupported, auto-update channel deferred, English-only UI).
+## Test totals
+
+**116 tests, 0 failures**: Core 56 · Linux 16 · Application 26 · Integration 18.
 
 ## Next actions
 
-1. Run on a real Linux desktop (Debian/Arch/Fedora) against a live Steam install; capture screenshots.
-2. Exercise the network flows end-to-end; record results in TEST_RESULTS.md.
-3. Configure the Velopack Linux release channel; cut v1.0.0 tag → CI release workflow handles the rest.
-4. Port satellite translations (infrastructure ready).
+1. Install the v1.0.1 release bundle on a real Linux Mint 22.3 desktop and confirm window rendering + screenshot comparison (original design tokens preserved).
+2. Exercise live Steam/network flows; record results in TEST_RESULTS.md.
+3. Configure the Velopack Linux channel; promote the pre-release to stable once desktop-verified.

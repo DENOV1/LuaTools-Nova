@@ -8,7 +8,7 @@ using LuaTools.Core.Services;
 using LuaTools.Integrations;
 using LuaTools.Linux;
 using LuaTools.UI.Services;
-using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Threading.Tasks;
 
@@ -26,41 +26,39 @@ public partial class App : AvApp
 
     public override void OnFrameworkInitializationCompleted()
     {
-        Services = new NovaServices(
-            dispatcher: action => Avalonia.Threading.Dispatcher.UIThread.Post(action),
-            onRecentAdd: appId => CacheRecent(appId));
-
-        var loggerFactory = LoggerFactory.Create(b => b.AddConsole().SetMinimumLevel(LogLevel.Information));
-
-        var pluginInstaller = new PluginInstallerService(Services.Github);
-        var cefInjector = new CefInjectorService(loggerFactory.CreateLogger<CefInjectorService>());
-        var navigation = new NavigationHost();
+        // UI-layer service implementations are created here and registered into the SINGLE
+        // composition root (NovaServices) before the container is built — so every ViewModel
+        // resolves them via constructor/Get<> without a second, ad-hoc composition root.
         var dialogs = new DialogServiceImpl();
         var toasts = new ToastServiceImpl();
+        var navigation = new NavigationHost();
 
-        // ViewModels (the original resolved pages from DI; Nova builds them once against the shell)
-        var mainVm = new MainViewModel(new AuthServiceProxy(Services.Auth), Services.ProcessControl,
-            new OnboardingViewModel(new AuthServiceProxy(Services.Auth), Services.Cache, Services.Settings,
-                new UnlockerServiceProxy { Settings = Services.Settings }, toasts),
-            dialogs);
+        Services = new NovaServices(
+            dispatcher: action => Avalonia.Threading.Dispatcher.UIThread.Post(action),
+            onRecentAdd: appId => CacheRecent(appId),
+            configure: services =>
+            {
+                services.AddSingleton<INavigationHost>(navigation);
+                services.AddSingleton<IDialogService>(dialogs);
+                services.AddSingleton<IToastService>(toasts);
+            });
+
+        // Everything resolves from the container (ValidateOnBuild already guaranteed the graph).
+        var mainVm = Services.Get<MainViewModel>();
         var onboarding = mainVm.Onboarding;
-        var homeVm = new HomeViewModel(Services);
-        var downloadVm = new DownloadViewModel(Services);
-        var downloadsVm = new DownloadsViewModel(Services);
-        var manageVm = new ManageViewModel(Services);
-        var buildsVm = new BuildsViewModel(Services);
-        var fixesVm = new FixesViewModel(Services);
-        var pluginVm = new PluginViewModel(Services, pluginInstaller);
-        var modeVm = new ModeViewModel(Services);
-        var settingsVm = new SettingsViewModel(Services);
+        var homeVm = Services.Get<HomeViewModel>();
+        var downloadVm = Services.Get<DownloadViewModel>();
+        var downloadsVm = Services.Get<DownloadsViewModel>();
+        var manageVm = Services.Get<ManageViewModel>();
+        var buildsVm = Services.Get<BuildsViewModel>();
+        var fixesVm = Services.Get<FixesViewModel>();
+        var pluginVm = Services.Get<PluginViewModel>();
+        var modeVm = Services.Get<ModeViewModel>();
+        var settingsVm = Services.Get<SettingsViewModel>();
         var dropVm = homeVm.Drop;
-
-        var addFacade = new ApplicationAddFacadeImpl(Services);
-
-        // Wire the HTTP backend (store-plugin contract)
-        var httpServer = new HttpServerService(Services.Installer, Services.Cache, Services.ProcessControl,
-            Services.Integrations, navigation, Services.Queue, Services.Jobs, Services.Api, Services.AppList,
-            () => addFacade, loggerFactory.CreateLogger<HttpServerService>());
+        var pluginInstaller = Services.Get<PluginInstallerService>();
+        var cefInjector = Services.Get<CefInjectorService>();
+        var httpServer = Services.Get<HttpServerService>();
 
         // Cross-page navigation delegates (same graph as the original's App.OnStartup)
         homeVm.NavigateToGame = appId => { navigation.NavigateTo("manage"); _ = manageVm.OpenDetailForAppIdAsync(appId); };
@@ -104,7 +102,8 @@ public partial class App : AvApp
                 if (!e.Cancel) await Services.StopAsync();
             };
 
-            _ = StartBackgroundAsync(mainVm, homeVm, downloadVm, settingsVm, fixesVm, manageVm, buildsVm, pluginVm, modeVm, httpServer, cefInjector);
+            _ = StartBackgroundAsync(mainVm, homeVm, downloadVm, settingsVm, fixesVm, manageVm,
+                buildsVm, pluginVm, modeVm, httpServer, cefInjector);
         }
 
         base.OnFrameworkInitializationCompleted();

@@ -5,9 +5,13 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
     <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="Avalonia.Headless" Version="11.2.8" />
+    <PackageReference Include="Avalonia.Skia" Version="11.2.8" />
+    <PackageReference Include="Avalonia.Headless.XUnit" Version="11.2.8" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\LuaTools.Integrations\LuaTools.Integrations.csproj" />
+    <ProjectReference Include="..\..\src\LuaTools.UI\LuaTools.UI.csproj" />
   </ItemGroup>
 </Project>

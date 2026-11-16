@@ -53,6 +53,13 @@ public interface IToastService
     void ShowAction(string title, string message, string actionLabel, Action onAction, bool error = false);
 }
 
+/// <summary>Optional capability: bind the toast presenter to a window (implemented by the UI host).
+/// Code must type-check against this, never hard-cast IToastService to a concrete class.</summary>
+public interface IToastPresenter
+{
+    void Attach(object window);
+}
+
 /// <summary>Cross-page navigation host.</summary>
 public interface INavigationHost
 {

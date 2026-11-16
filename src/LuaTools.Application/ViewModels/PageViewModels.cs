@@ -559,10 +559,10 @@ public partial class ModeViewModel : ObservableObject
     [ObservableProperty] private string _confirmTitle = "";
     private ModeCardViewModel? _pendingCard;
 
-    public ModeViewModel(NovaServices svc)
+    public ModeViewModel(NovaServices svc, UnlockerServiceProxy unlocker)
     {
         _svc = svc;
-        _unlocker = svc.Get<UnlockerServiceProxy>();
+        _unlocker = unlocker;
         _unlocker.Settings = svc.Settings;
     }
 

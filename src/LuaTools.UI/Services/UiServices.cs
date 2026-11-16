@@ -29,18 +29,24 @@ public sealed class DialogServiceImpl : IDialogService
     }
 }
 
-public sealed class ToastServiceImpl : IToastService
+public sealed class ToastServiceImpl : IToastService, IToastPresenter
 {
     private WindowNotificationManager? _manager;
 
-    public void Attach(Window window)
+    public void Attach(Window window) => Attach((object)window);
+
+    /// <summary>IToastPresenter.Attach — accepts any TopLevel/Window (test hosts included).</summary>
+    public void Attach(object window)
     {
-        _manager = new WindowNotificationManager(window)
+        if (window is Window w)
         {
-            Position = NotificationPosition.BottomRight,
-            MaxItems = 4,
-            Margin = new Avalonia.Thickness(0, 0, 24, 18),
-        };
+            _manager = new WindowNotificationManager(w)
+            {
+                Position = NotificationPosition.BottomRight,
+                MaxItems = 4,
+                Margin = new Avalonia.Thickness(0, 0, 24, 18),
+            };
+        }
     }
 
     public void Show(string title, string message, bool error = false)

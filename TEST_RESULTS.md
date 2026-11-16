@@ -1,72 +1,81 @@
-# TEST_RESULTS — LuaTools Nova
+# TEST_RESULTS — LuaTools Nova v1.0.1
 
-Environment: Debian GNU/Linux 13 (trixie), .NET SDK 8.0.428, xUnit 2.9.2, sandbox **without a display server and without Steam installed**. Commands and raw results recorded below; nothing is claimed beyond what was actually run.
+Environment: Debian GNU/Linux 13 (trixie), .NET SDK 8.0.428, xUnit 2.9.2, Avalonia 11.2.8 + FluentAvaloniaUI 2.3.0. Sandbox has **no display server, no Steam, no live lua.tools/Hubcap services**. Every result below labels how it was verified. Nothing mocked is presented as real-world.
 
-## 1. Build
+## 1. Build (Release, clean outputs)
 
 ```
-$ dotnet build LuaTools.Nova.sln -c Release --nologo -v q
-Build succeeded.
-    0 Warning(s)
-    0 Error(s)
+$ rm -rf artifacts bin obj src/*/bin src/*/obj tests/*/bin tests/*/obj
+$ ./packaging/publish.sh        # runs dotnet test -c Release FIRST, then publish
+Passed! 56/56 Core · 16/16 Linux · 26/26 Application · 18/18 Integration
+Build succeeded. 0 Errors
+99M  artifacts/luatools-nova-linux-x64/
 ```
-(One informational Avalonia warning AVLN3001 during publish — DI-injected window has no parameterless ctor; benign, same pattern as the original.)
+**Passed.**
 
-## 2. Automated tests
+## 2. Automated tests (Debug and Release configurations, both green)
 
 ```
 $ dotnet test LuaTools.Nova.sln --nologo
-Passed!  - Failed:     0, Passed:    56, Skipped:     0, Total:    56, Duration: 293 ms - Core.Tests.dll
-Passed!  - Failed:     0, Passed:    16, Skipped:     0, Total:    16, Duration:  95 ms - Linux.Tests.dll
-Passed!  - Failed:     0, Passed:    13, Skipped:     0, Total:    13, Duration: 186 ms - Integration.Tests.dll
-Passed!  - Failed:     0, Passed:    17, Skipped:     0, Total:    17, Duration: 197 ms - Application.Tests.dll
-TOTAL: 102 tests, 0 failed (per-suite totals above include parameterized cases)
+Passed! 56/56  Core.Tests
+Passed! 16/16  Linux.Tests
+Passed! 26/26  Application.Tests   (+10 new DI-audit tests)
+Passed! 18/18  Integration.Tests   (+5 new headless UI tests)
+TOTAL: 116 tests, 0 failures
 ```
+**Passed.**
 
-Coverage highlights (what the tests actually pin):
-- lua grammar parse/comment-toggles, key merge, diff
-- manifest binary codec (raw + zipped), identity match, garbage rejection
-- settings.json atomic write + corrupt→.bak recovery; cache caps/dedupe
-- Steam path discovery (symlink resolution, debian fallback, flatpak flag, language, override)
-- library roots union (config/ + steamapps/), missing-installdir skip
-- Proton compat parsing (native runtimes ≠ proton) + WINEDLLOVERRIDES merge/idempotence/removal
-- download queue dedupe/cancel/history/pause-resume/retry-with-progress; sliding rate window + ETA
-- pager windowing + per-page "All"
-- link parser (SteamDB/store/community/steam:// + depot/sub/bare-number rejection)
-- mode migration (legacy → current), DoH json parsing + bypass rules, byte formatting
-- plugin popup DTO camelCase JSON contract, fix record codec, path containment, ToolPaths layout
+### What the tests actually verify (unit / mocked-integration labeled)
 
-## 3. Tests that caught real product bugs (fixed)
+| Suite | Tests | Type |
+|---|---|---|
+| Lua grammar parse/comment-toggles/key-merge/diff | 6 | Unit |
+| LuaVault content-addressed store (capture/apply/dedupe/delete-guard/update-in-place) | 5 | Unit (temp-dir filesystem) |
+| Manifest binary codec (raw+zipped, identity match, garbage rejection) | 4 | Unit |
+| Settings atomic write + corrupt→.bak recovery; CacheService caps/dedupe | 6 | Unit (temp-dir filesystem) |
+| Steam path discovery: bootstrap symlink (resolved), debian fallback, Flatpak flag, registry.vdf language, override precedence | 5 | Unit (fixture $HOME) |
+| Library roots union (config/+steamapps/ vdf) + missing-installdir skip | 2 | Unit (fixtures) |
+| Proton compat (native runtimes ≠ proton) + WINEDLLOVERRIDES merge/idempotence/removal | 8 | Unit |
+| Download queue dedupe/cancel/history/pause-resume/-validate/retry-progress; rate window + ETA | 11 | Unit (inline dispatcher) |
+| Pager windowing + "All" mode | 3 | Unit |
+| Link parser; mode migration; DoH parser; byte format | 11 | Unit |
+| **DI audit (NEW)**: every registered service resolves; all 12 ViewModels resolve; singletons; proxy↔settings wiring; ValidateOnBuild catches missing deps | 10 | Integration (real container, boundary fakes) |
+| **Headless UI (NEW)**: real MainWindow via compiled XAML; all 10 page DataContexts injected; navigation to all 9 pages; Show/Close lifecycle; Mode cards | 5 | Integration (real Avalonia app, headless Skia rendering — **not** pixel-verified) |
+| Fix-record codec + path containment + SafeFixKey | 4 | Unit |
+| ToolPaths XDG layout; plugin popup DTO camelCase contract; HTTP status mapping | 8 | Unit |
+| Steam integration with **real Steam** | 0 | **Not tested** (no Steam in sandbox) |
+| Live lua.tools/Hubcap/Supabase/DepotDownloader calls | 0 | **Not tested** (endpoints identical to original; logic unit-tested) |
+| GUI rendering on a real display | 0 | **Not tested** (no display) |
 
-1. `WineOverrides.BuildOverrides` — Lua-style lazy quantifier `.-` mistranslated to C# (matched 1-char DLL stems); fixed to `.+?`.
-2. `SteamPathLocator` — did not follow the `~/.steam/steam` symlink; now resolves `LinkTarget` (relative targets supported).
-3. `PluginAddStateDto` JSON contract — serialized PascalCase; the store-page plugin expects camelCase; now serialized with `JsonNamingPolicy.CamelCase`.
+## 3. Bugs discovered & fixed this audit (each with a regression test)
 
-## 4. Publish + smoke test
+1. **[CRITICAL — the reported crash]** Split composition root → `UnlockerServiceProxy` (and 14 more) unregistered. Fixed: single container + ValidateOnBuild. Tests: `Regression_*`, `Audit_*`.
+2. **[MAJOR]** `MainWindow` hard-cast `IToastService` → `ToastServiceImpl` (would throw for any alternate implementation). Fixed with `IToastPresenter` capability interface. Caught by headless tests.
+3. **[MINOR — packaging]** `install.sh` desktop entry kept `Exec=/opt/...` even for user-local installs; `mkdir -p` missing for user-local applications dir. Fixed; verified by executing the scripts.
+4. **[MINOR — tooling]** `publish.sh` failed when `dotnet` wasn't on PATH. Fixed (workspace SDK autodetected).
+
+## 4. Release build + smoke test
 
 ```
-$ ./packaging/publish.sh   # = dotnet test + publish -r linux-x64 --self-contained + staging
-99M     artifacts/luatools-nova-linux-x64/
+$ ./packaging/publish.sh
+-rwxr-xr-x luatools-nova (ELF 64-bit LSB pie executable, x86-64)
+99M artifacts/luatools-nova-linux-x64/
 
 $ ./artifacts/luatools-nova-linux-x64/luatools-nova
-Unhandled exception. System.Exception: XOpenDisplay failed
-   at Avalonia.X11.AvaloniaX11Platform.Initialize(X11PlatformOptions options)
+System.Exception: XOpenDisplay failed
+   at Avalonia.X11.AvaloniaX11Platform.Initialize(...)
 ```
-**Interpretation:** the self-contained bundle executes natively; managed + native components load; the run terminates only at X11 display init because this sandbox has **no display server**. This is the expected headless result and proves the bundle's runtime integrity, not GUI behavior.
+**Passed** — bundle executes natively; the only failure is "no display server in sandbox", the expected headless endpoint. `luatools-nova.ico/.png/.desktop` staged beside the binary.
 
-## 5. Manual GUI verification — NOT YET PERFORMED (honest status)
+## 5. Packaging scripts (actually executed)
 
-The sandbox cannot run X11/Wayland, so the following are **not yet verified** and remain open items:
-- Window render + navigation through all 10 pages
-- Real Steam interaction (discovery against a live `~/.steam`, lua install into `config/stplug-in`, restart ladder)
-- Live network flows (search/sources/auth/depots/fixes/plugin install/CDP injection)
-- Desktop-entry launch, tray behavior, protocol handler from a browser
+```
+$ DEST_OVERRIDE=… ./packaging/install.sh      → binary + .desktop + hicolor icons installed;
+                                                desktop Exec rewritten to the real destination
+$ DEST_OVERRIDE=… ./packaging/uninstall.sh    → app files removed; ~/.config/LuaToolsNova preserved
+```
+**Passed** (user-local mode, no sudo). System `/opt` mode: **Not tested** (needs root; same code path).
 
-Record results here as they are run on a real desktop.
+## 6. GUI on real display / Linux Mint 22.3 desktop
 
-## 6. Distributions
-
-| Distro | Status |
-|---|---|
-| Debian 13 (trixie) | **Build + tests + publish verified on this sandbox.** GUI run pending (no display). |
-| Ubuntu 22.04/24.04, Fedora, Arch, SteamOS, Bazzite, Mint | **Not yet verified** — claimed as *targets*, not verified. CI (ubuntu-latest) covers build+tests on every push. |
+**Not tested.** No display server here. Marked as the headline limitation of the v1.0.1 release (pre-release).

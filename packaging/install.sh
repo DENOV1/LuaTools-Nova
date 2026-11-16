@@ -5,11 +5,21 @@
 set -euo pipefail
 
 SRC_DIR="${1:-artifacts/luatools-nova-linux-x64}"
-DEST=/opt/luatools-nova
-ICONS_DIR=/usr/share/icons/hicolor
+# System install (default): /opt/luatools-nova — needs sudo.
+# User-local install (no sudo): DEST_OVERRIDE=$HOME/.local/luatools-nova ./install.sh
+DEST="${DEST_OVERRIDE:-/opt/luatools-nova}"
+if [ -n "${DEST_OVERRIDE:-}" ]; then
+  APPS_DIR="${APPS_DIR_OVERRIDE:-$HOME/.local/share/applications}"
+  ICONS_DIR="${ICONS_DIR_OVERRIDE:-$HOME/.local/share/icons/hicolor}"
+  PRIV=0
+else
+  APPS_DIR=/usr/share/applications
+  ICONS_DIR=/usr/share/icons/hicolor
+  PRIV=1
+fi
 
-if [ "$(id -u)" -ne 0 ]; then
-  echo "Run with sudo: sudo ./install.sh" >&2
+if [ "$PRIV" -eq 1 ] && [ "$(id -u)" -ne 0 ]; then
+  echo "Run with sudo: sudo ./install.sh   (or: DEST_OVERRIDE=~/... ./install.sh)" >&2
   exit 1
 fi
 
@@ -23,7 +33,9 @@ mkdir -p "$DEST"
 cp -a "$SRC_DIR/." "$DEST/"
 
 echo "→ Desktop entry"
-install -Dm644 packaging/luatools-nova.desktop /usr/share/applications/luatools-nova.desktop
+# Rewrite Exec/Icon paths for the actual destination (packaging default is /opt).
+mkdir -p "$APPS_DIR"
+sed "s|^Exec=.*|Exec=$DEST/luatools-nova %u|" packaging/luatools-nova.desktop > "$APPS_DIR/luatools-nova.desktop"
 
 echo "→ Icons"
 for spec in 16:16 24:24 32:32 48:48 64:64 128:128 256:256; do
@@ -37,4 +49,4 @@ echo "→ Refreshing caches"
 update-desktop-database >/dev/null 2>&1 || true
 gtk-update-icon-cache -f "$ICONS_DIR" >/dev/null 2>&1 || true
 
-echo "✓ Installed. Launch 'LuaTools Nova' from your app menu or run: $DEST/luatools-nova"
+echo "✓ Installed to $DEST. Launch 'LuaTools Nova' from your app menu or run: $DEST/luatools-nova"

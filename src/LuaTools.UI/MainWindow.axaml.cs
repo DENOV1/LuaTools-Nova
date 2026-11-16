@@ -25,6 +25,9 @@ public partial class MainWindow : Window
     private bool _reallyExiting;
 
     private readonly Dictionary<string, Control> _pages;
+
+    /// <summary>Test seam: page key → hosted control (headless lifecycle tests assert DI wiring).</summary>
+    public IReadOnlyDictionary<string, Control> TestPages => _pages;
     private readonly Dictionary<string, Action> _pageLoads;
 
 
@@ -54,8 +57,9 @@ public partial class MainWindow : Window
             ["settings"] = PageSettings,
         };
 
-        var toast = (ToastServiceImpl)_toasts;
-        toast.Attach(this);
+        // Interface-segregated attach: never hard-cast the toast service to its concrete type
+        // (a headless/test host may supply a different IToastService implementation).
+        if (_toasts is IToastPresenter presenter) presenter.Attach(this);
 
         DataContext = vm;
 

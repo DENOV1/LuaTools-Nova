@@ -131,10 +131,10 @@ public partial class HomeViewModel : ObservableObject
     [ObservableProperty] private string _accountStatus = "Browsing as guest";
     [ObservableProperty] private string _modeStatus = "No mode selected";
 
-    public HomeViewModel(NovaServices svc)
+    public HomeViewModel(NovaServices svc, ViewModels.DropInstallViewModel? drop = null)
     {
         _svc = svc;
-        Drop = new DropInstallViewModel(svc);
+        Drop = drop ?? new DropInstallViewModel(svc);
     }
 
     [RelayCommand] private void OpenGame(LuaTileViewModel tile) => NavigateToGame?.Invoke(tile.AppId);

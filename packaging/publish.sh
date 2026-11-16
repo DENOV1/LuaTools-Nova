@@ -3,6 +3,10 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
+# Prefer the workspace-local SDK (sandbox), fall back to PATH.
+if [ -z "${DOTNET:-}" ] && [ -x /home/z/my-project/tools/dotnet/dotnet ]; then
+  DOTNET=/home/z/my-project/tools/dotnet/dotnet
+fi
 DOTNET=${DOTNET:-dotnet}
 OUT=artifacts/luatools-nova-linux-x64
 
